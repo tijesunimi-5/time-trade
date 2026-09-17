@@ -9,7 +9,7 @@ import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
-import { Sparkles, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -51,17 +51,17 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-65px)] flex items-center justify-center p-4 py-12 relative overflow-hidden">
+    <div className="min-h-[calc(100vh-65px)] flex items-center justify-center p-4 py-12 relative overflow-hidden bg-slate-50">
       <div className="w-full max-w-xl space-y-6 relative z-10">
         <div className="text-center space-y-2">
           <Badge variant="cyan">Join Cohort</Badge>
-          <h1 className="text-3xl font-black text-white">90-Day Challenge Registration</h1>
-          <p className="text-xs text-slate-400">Set up your profile and join your assigned follow-up cohort</p>
+          <h1 className="text-3xl font-black text-slate-900">90-Day Challenge Registration</h1>
+          <p className="text-xs text-slate-500">Set up your profile and join your assigned follow-up cohort</p>
         </div>
 
         <Card variant="glass" className="space-y-6">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-semibold">
+            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
               {error}
             </div>
           )}
@@ -103,7 +103,7 @@ export default function RegisterPage() {
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Age Range
               </label>
               <select
@@ -111,15 +111,15 @@ export default function RegisterPage() {
                 onChange={(e) => setAgeRange(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl glass-input text-sm font-medium"
               >
-                <option value="18-24" className="bg-navy-900">18 - 24 years</option>
-                <option value="25-34" className="bg-navy-900">25 - 34 years</option>
-                <option value="35-44" className="bg-navy-900">35 - 44 years</option>
-                <option value="45+" className="bg-navy-900">45+ years</option>
+                <option value="18-24">18 - 24 years</option>
+                <option value="25-34">25 - 34 years</option>
+                <option value="35-44">35 - 44 years</option>
+                <option value="45+">45+ years</option>
               </select>
             </div>
 
             <div className="space-y-1.5">
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Primary Goals for this 90-Day Challenge
               </label>
               <textarea
@@ -127,7 +127,7 @@ export default function RegisterPage() {
                 rows={3}
                 value={goals}
                 onChange={(e) => setGoals(e.target.value)}
-                className="w-full px-4 py-3 rounded-xl glass-input text-sm font-medium placeholder:text-slate-500"
+                className="w-full px-4 py-3 rounded-xl glass-input text-sm font-medium placeholder:text-slate-400"
               />
             </div>
 
@@ -137,9 +137,9 @@ export default function RegisterPage() {
           </form>
         </Card>
 
-        <p className="text-center text-xs text-slate-400">
+        <p className="text-center text-xs text-slate-500">
           Already registered?{' '}
-          <Link href="/login" className="text-brand-cyan font-semibold hover:underline">
+          <Link href="/login" className="text-brand-600 font-bold hover:underline">
             Sign In
           </Link>
         </p>

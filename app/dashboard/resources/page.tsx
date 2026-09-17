@@ -43,34 +43,34 @@ export default function ResourcesPage() {
   ];
 
   return (
-    <div className="flex min-h-[calc(100vh-65px)]">
+    <div className="flex min-h-[calc(100vh-65px)] bg-slate-50">
       <Sidebar />
-      <div className="flex-1 p-4 lg:p-8 space-y-8 max-w-6xl mx-auto">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-6xl mx-auto">
         <div className="space-y-1">
           <Badge variant="cyan">Challenge Library</Badge>
-          <h1 className="text-3xl font-black text-white">Curated Growth Resources</h1>
-          <p className="text-xs text-slate-400">Assigned reading, podcasts, videos, and study guides for the 90-day challenge</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900">Curated Growth Resources</h1>
+          <p className="text-xs text-slate-500">Assigned reading, podcasts, videos, and study guides for the 90-day challenge</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {resources.map((item, idx) => {
             const Icon = item.icon;
             return (
-              <Card key={idx} variant="glass" className="space-y-4">
+              <Card key={idx} variant="glass" className="space-y-3 sm:space-y-4">
                 <div className="flex items-center justify-between">
                   <Badge variant={item.pillar.toLowerCase() as any}>{item.pillar}</Badge>
-                  <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
-                    <Icon className="w-3.5 h-3.5 text-brand-cyan" />
+                  <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                    <Icon className="w-3.5 h-3.5 text-brand-600" />
                     {item.type}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-white">{item.title}</h3>
-                <p className="text-xs text-slate-300 leading-relaxed">{item.desc}</p>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">{item.title}</h3>
+                <p className="text-xs text-slate-600 leading-relaxed">{item.desc}</p>
                 <a
                   href={item.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-cyan hover:underline pt-2"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-brand-600 hover:underline pt-1"
                 >
                   Open Resource <ExternalLink className="w-3.5 h-3.5" />
                 </a>

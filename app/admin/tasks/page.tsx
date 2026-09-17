@@ -7,7 +7,7 @@ import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { api } from '../../../services/api';
-import { Plus, Trash2, Edit3, CheckSquare, Clock, AlertCircle } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
 export default function AdminTasksPage() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -77,15 +77,15 @@ export default function AdminTasksPage() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-65px)]">
+    <div className="flex min-h-[calc(100vh-65px)] bg-slate-50">
       <Sidebar />
 
-      <div className="flex-1 p-4 lg:p-8 space-y-8 max-w-6xl mx-auto">
-        <div className="flex items-center justify-between">
+      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-6xl mx-auto">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
             <Badge variant="cyan">Database Task Engine</Badge>
-            <h1 className="text-3xl font-black text-white">System Task Manager</h1>
-            <p className="text-xs text-slate-400">Configure tasks dynamically without developer intervention</p>
+            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">System Task Manager</h1>
+            <p className="text-xs text-slate-500">Configure tasks dynamically without developer intervention</p>
           </div>
 
           <Button variant="primary" size="md" onClick={() => setShowModal(true)} className="flex items-center gap-2">
@@ -95,24 +95,24 @@ export default function AdminTasksPage() {
 
         {/* Existing Tasks List */}
         {isLoading ? (
-          <div className="p-12 text-center text-slate-400 glass-panel rounded-2xl">
+          <div className="p-12 text-center text-slate-500 glass-panel rounded-2xl">
             Loading database tasks...
           </div>
         ) : (
           <div className="space-y-3">
             {tasks.map((task) => (
               <Card key={task.id} variant="glass" className="space-y-2">
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
                       {task.isNonNegotiable && <Badge variant="nonNegotiable">NON-NEGOTIABLE</Badge>}
                       <Badge variant={task.pillar.toLowerCase() as any}>{task.pillar}</Badge>
-                      <span className="text-[11px] font-bold text-slate-400 uppercase bg-slate-800/80 px-2 py-0.5 rounded-md">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase bg-slate-100 px-2 py-0.5 rounded-md">
                         {task.frequencyType}
                       </span>
                     </div>
-                    <h3 className="text-base font-bold text-white">{task.title}</h3>
-                    <p className="text-xs text-slate-300">{task.description}</p>
+                    <h3 className="text-base font-bold text-slate-900">{task.title}</h3>
+                    <p className="text-xs text-slate-600">{task.description}</p>
                   </div>
 
                   <Button
@@ -131,9 +131,9 @@ export default function AdminTasksPage() {
 
         {/* Create Task Modal */}
         {showModal && (
-          <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-            <Card variant="glass" className="max-w-xl w-full p-6 space-y-4">
-              <h3 className="text-xl font-bold text-white">Create New Challenge Task</h3>
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <Card variant="glass" className="max-w-xl w-full p-6 space-y-4 bg-white">
+              <h3 className="text-xl font-bold text-slate-900">Create New Challenge Task</h3>
 
               <form onSubmit={handleCreateTask} className="space-y-4">
                 <Input
@@ -145,7 +145,7 @@ export default function AdminTasksPage() {
                 />
 
                 <div className="space-y-1.5">
-                  <label className="block text-xs font-semibold text-slate-300 uppercase">Description</label>
+                  <label className="block text-xs font-bold text-slate-700 uppercase">Description</label>
                   <textarea
                     placeholder="Instructions for participants..."
                     rows={2}
@@ -158,41 +158,41 @@ export default function AdminTasksPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-300 uppercase">Growth Pillar</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase">Growth Pillar</label>
                     <select
                       value={pillar}
                       onChange={(e: any) => setPillar(e.target.value)}
                       className="w-full px-3 py-2.5 rounded-xl glass-input text-xs font-medium"
                     >
-                      <option value="SPIRITUAL" className="bg-navy-900">SPIRITUAL</option>
-                      <option value="MENTAL" className="bg-navy-900">MENTAL</option>
-                      <option value="SOCIAL" className="bg-navy-900">SOCIAL</option>
+                      <option value="SPIRITUAL">SPIRITUAL</option>
+                      <option value="MENTAL">MENTAL</option>
+                      <option value="SOCIAL">SOCIAL</option>
                     </select>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-xs font-semibold text-slate-300 uppercase">Frequency</label>
+                    <label className="block text-xs font-bold text-slate-700 uppercase">Frequency</label>
                     <select
                       value={frequencyType}
                       onChange={(e) => setFrequencyType(e.target.value)}
                       className="w-full px-3 py-2.5 rounded-xl glass-input text-xs font-medium"
                     >
-                      <option value="DAILY" className="bg-navy-900">DAILY</option>
-                      <option value="WEEKLY" className="bg-navy-900">WEEKLY</option>
-                      <option value="MONTHLY" className="bg-navy-900">MONTHLY</option>
+                      <option value="DAILY">DAILY</option>
+                      <option value="WEEKLY">WEEKLY</option>
+                      <option value="MONTHLY">MONTHLY</option>
                     </select>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-950/40 border border-amber-500/30">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-amber-50 border border-amber-200">
                   <input
                     type="checkbox"
                     id="nonNeg"
                     checked={isNonNegotiable}
                     onChange={(e) => setIsNonNegotiable(e.target.checked)}
-                    className="w-4 h-4 rounded accent-amber-500"
+                    className="w-4 h-4 rounded accent-amber-600"
                   />
-                  <label htmlFor="nonNeg" className="text-xs font-bold text-amber-300 cursor-pointer">
+                  <label htmlFor="nonNeg" className="text-xs font-bold text-amber-900 cursor-pointer">
                     Flag as NON-NEGOTIABLE Task
                   </label>
                 </div>

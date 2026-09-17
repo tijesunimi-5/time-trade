@@ -27,7 +27,7 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="rgba(255, 255, 255, 0.08)"
+          stroke="#E2E8F0"
           strokeWidth={strokeWidth}
           fill="transparent"
         />
@@ -35,7 +35,7 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="url(#cyan-blue-gradient)"
+          stroke="url(#blue-brand-gradient)"
           strokeWidth={strokeWidth}
           fill="transparent"
           strokeDasharray={circumference}
@@ -44,15 +44,15 @@ export const ProgressRing: React.FC<ProgressRingProps> = ({
           className="transition-all duration-1000 ease-out"
         />
         <defs>
-          <linearGradient id="cyan-blue-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#38BDF8" />
-            <stop offset="100%" stopColor="#3B82F6" />
+          <linearGradient id="blue-brand-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#3B82F6" />
+            <stop offset="100%" stopColor="#1D4ED8" />
           </linearGradient>
         </defs>
       </svg>
       <div className="absolute text-center flex flex-col items-center justify-center">
-        <span className="text-2xl font-extrabold text-white tracking-tight">{Math.round(normalizedProgress)}%</span>
-        {sublabel && <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">{sublabel}</span>}
+        <span className="text-2xl font-extrabold text-slate-900 tracking-tight">{Math.round(normalizedProgress)}%</span>
+        {sublabel && <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">{sublabel}</span>}
       </div>
     </div>
   );

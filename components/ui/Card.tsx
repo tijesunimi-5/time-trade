@@ -16,9 +16,9 @@ export const Card: React.FC<CardProps> = ({
   const base = 'rounded-2xl p-6 transition-all duration-300';
   const variants = {
     glass: 'glass-panel',
-    solid: 'bg-navy-900 border border-slate-800',
+    solid: 'bg-white border border-slate-200 shadow-subtle-sm',
     interactive: 'glass-panel-interactive cursor-pointer',
-    gold: 'bg-gradient-to-br from-amber-950/40 via-navy-900 to-navy-950 border border-amber-500/30 backdrop-blur-xl',
+    gold: 'bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-white border border-amber-400/40 backdrop-blur-xl shadow-subtle-md',
   };
 
   return (
@@ -26,7 +26,7 @@ export const Card: React.FC<CardProps> = ({
       className={cn(
         base,
         variants[variant],
-        isGlow && 'shadow-glow-cyan border-brand-cyan/40',
+        isGlow && 'ring-2 ring-brand-500/30 border-brand-500 shadow-subtle-lg',
         className
       )}
       {...props}

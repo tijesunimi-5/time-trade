@@ -24,12 +24,10 @@ export const Sidebar: React.FC = () => {
   const adminLinks = [
     { href: '/admin', label: 'Overview Analytics', icon: Shield },
     { href: '/admin/tasks', label: 'Task Engine Manager', icon: CheckSquare },
-    { href: '/admin/participants', label: 'Participant Directory', icon: Users },
-    { href: '/admin/testimonials', label: 'Testimonials Queue', icon: MessageSquare },
   ];
 
   return (
-    <aside className="w-64 hidden lg:block glass-panel border-r border-white/10 p-4 min-h-[calc(100vh-65px)] sticky top-[65px]">
+    <aside className="w-64 hidden lg:block bg-white/80 backdrop-blur-xl border-r border-slate-200/90 p-4 min-h-[calc(100vh-65px)] sticky top-[65px] shadow-subtle-sm">
       <div className="space-y-6">
         {/* Participant Section */}
         <div>
@@ -44,13 +42,13 @@ export const Sidebar: React.FC = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                     isActive
-                      ? 'bg-gradient-to-r from-brand-cyan/20 to-brand-blue/20 text-brand-cyan border border-brand-cyan/30 shadow-glow-cyan'
-                      : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+                      ? 'bg-brand-50 text-brand-600 border border-brand-200/80 shadow-subtle-sm'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
                   }`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-brand-cyan' : 'text-slate-400'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-brand-600' : 'text-slate-400'}`} />
                   {item.label}
                 </Link>
               );
@@ -61,7 +59,7 @@ export const Sidebar: React.FC = () => {
         {/* Follow-up Section */}
         {(user?.role === 'FOLLOW_UP' || user?.role === 'ADMIN') && (
           <div>
-            <h4 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest px-3 mb-2">
+            <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest px-3 mb-2">
               Follow-Up System
             </h4>
             <nav className="space-y-1">
@@ -72,13 +70,13 @@ export const Sidebar: React.FC = () => {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                       isActive
-                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                        : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
                     }`}
                   >
-                    <Icon className="w-4 h-4 text-emerald-400" />
+                    <Icon className="w-4 h-4 text-emerald-600" />
                     {item.label}
                   </Link>
                 );
@@ -90,7 +88,7 @@ export const Sidebar: React.FC = () => {
         {/* Admin Section */}
         {user?.role === 'ADMIN' && (
           <div>
-            <h4 className="text-[10px] font-bold text-amber-400 uppercase tracking-widest px-3 mb-2">
+            <h4 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest px-3 mb-2">
               Admin & EXCO Portal
             </h4>
             <nav className="space-y-1">
@@ -101,13 +99,13 @@ export const Sidebar: React.FC = () => {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                       isActive
-                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                        : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/50'
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
                     }`}
                   >
-                    <Icon className="w-4 h-4 text-amber-400" />
+                    <Icon className="w-4 h-4 text-amber-600" />
                     {item.label}
                   </Link>
                 );
