@@ -1,6 +1,6 @@
 import { useAuthStore } from '../store/useAuthStore';
 
-const API_BASE = '/api/v1';
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'https://time-trade-backend.onrender.com/api/v1';
 
 async function fetcher(endpoint: string, options: RequestInit = {}) {
   const token = useAuthStore.getState().token;
