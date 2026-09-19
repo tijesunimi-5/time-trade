@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, CheckSquare, Calendar, Trophy, BookOpen, MessageSquare, Shield, Users } from 'lucide-react';
+import { LayoutDashboard, CheckSquare, Calendar, Trophy, BookOpen, Settings, Shield, Users } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 
 export const Sidebar: React.FC = () => {
@@ -24,6 +24,7 @@ export const Sidebar: React.FC = () => {
   const adminLinks = [
     { href: '/admin', label: 'Overview Analytics', icon: Shield },
     { href: '/admin/tasks', label: 'Task Engine Manager', icon: CheckSquare },
+    { href: '/admin/settings', label: 'EXCO System Settings', icon: Settings },
   ];
 
   return (
@@ -57,7 +58,7 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Follow-up Section */}
-        {(user?.role === 'FOLLOW_UP' || user?.role === 'ADMIN') && (
+        {(user?.role?.includes('FOLLOW_UP') || user?.role?.includes('ADMIN')) && (
           <div>
             <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest px-3 mb-2">
               Follow-Up System
@@ -86,7 +87,7 @@ export const Sidebar: React.FC = () => {
         )}
 
         {/* Admin Section */}
-        {user?.role === 'ADMIN' && (
+        {user?.role?.includes('ADMIN') && (
           <div>
             <h4 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest px-3 mb-2">
               Admin & EXCO Portal

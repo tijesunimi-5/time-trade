@@ -9,7 +9,7 @@ import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Shield, User } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,8 +17,20 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  const redirectUser = (user: any) => {
+    const roles = user.rolesList || (user.role ? user.role.split(',') : ['PARTICIPANT']);
+    if (roles.includes('ADMIN')) {
+      router.push('/admin');
+    } else if (roles.includes('FOLLOW_UP')) {
+      router.push('/follow-up');
+    } else {
+      router.push('/dashboard');
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,40 +38,31 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await api.login({ email, password });
+      const res = await api.login({ email, password: password || undefined });
       setAuth(res.user, res.token);
-
-      if (res.user.role === 'ADMIN') {
-        router.push('/admin');
-      } else if (res.user.role === 'FOLLOW_UP') {
-        router.push('/follow-up');
-      } else {
-        router.push('/dashboard');
-      }
+      redirectUser(res.user);
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      if (err.message?.includes('Password is required')) {
+        setShowPassword(true);
+        setError('An Admin/Coach password is required for this email address.');
+      } else {
+        setError(err.message || 'Login failed');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleQuickLogin = async (userEmail: string, role: string) => {
+  const handleQuickLogin = async (userEmail: string, presetPass?: string) => {
     setEmail(userEmail);
-    setPassword('password123');
+    if (presetPass) setPassword(presetPass);
     setError('');
     setIsLoading(true);
 
     try {
-      const res = await api.login({ email: userEmail, password: 'password123' });
+      const res = await api.login({ email: userEmail, password: presetPass });
       setAuth(res.user, res.token);
-
-      if (res.user.role === 'ADMIN') {
-        router.push('/admin');
-      } else if (res.user.role === 'FOLLOW_UP') {
-        router.push('/follow-up');
-      } else {
-        router.push('/dashboard');
-      }
+      redirectUser(res.user);
     } catch (err: any) {
       setError(err.message || 'Quick login failed');
     } finally {
@@ -68,45 +71,48 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-65px)] flex items-center justify-center p-4 relative overflow-hidden bg-slate-50">
-      <div className="w-full max-w-md space-y-6 relative z-10">
-        <div className="text-center space-y-2">
+    <div className="min-h-[calc(100vh-65px)] flex items-center justify-center p-3 sm:p-4 bg-slate-50 relative overflow-hidden">
+      <div className="w-full max-w-md space-y-4 relative z-10 my-auto">
+        <div className="text-center space-y-1">
           <Badge variant="cyan">Sign In</Badge>
-          <h1 className="text-3xl font-black text-slate-900">Welcome Back</h1>
-          <p className="text-xs text-slate-500">Access your 90-day task checklist and streak records</p>
+          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">Welcome Back</h1>
+          <p className="text-xs text-slate-500">Sign in to your dashboard with your registered email</p>
         </div>
 
-        <Card variant="glass" className="space-y-6">
+        <Card variant="glass" className="p-5 sm:p-6 space-y-4 bg-white/90 shadow-subtle-lg">
           {error && (
-            <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
+            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-3">
             <Input
               label="Email Address"
               type="email"
-              placeholder="participant@timetrade.com"
+              placeholder="david@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
-            <Input
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <Button type="submit" variant="primary" size="lg" className="w-full" isLoading={isLoading}>
+
+            {(showPassword || password) && (
+              <Input
+                label="Admin Password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            )}
+
+            <Button type="submit" variant="primary" size="lg" className="w-full text-sm py-3" isLoading={isLoading}>
               Sign In to Dashboard <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </form>
 
-          {/* Quick Demo Logins */}
-          <div className="pt-4 border-t border-slate-200 space-y-3">
+          {/* Quick Preset Demo Logins */}
+          <div className="pt-3 border-t border-slate-200 space-y-2">
             <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block text-center">
               Quick Preset Logins (One-Click)
             </span>
@@ -114,8 +120,8 @@ export default function LoginPage() {
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => handleQuickLogin('participant@timetrade.com', 'PARTICIPANT')}
-                className="p-2.5 rounded-xl bg-slate-100 hover:bg-brand-50 border border-slate-200 hover:border-brand-300 text-left text-xs font-medium space-y-1 transition-colors"
+                onClick={() => handleQuickLogin('participant@timetrade.com')}
+                className="p-2.5 rounded-xl bg-slate-100 hover:bg-brand-50 border border-slate-200 hover:border-brand-300 text-left text-xs font-medium space-y-0.5 transition-colors"
               >
                 <span className="text-[10px] font-bold text-brand-700 uppercase block">Participant</span>
                 <span className="text-slate-900 font-semibold truncate block">David O.</span>
@@ -123,8 +129,8 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => handleQuickLogin('followup@timetrade.com', 'FOLLOW_UP')}
-                className="p-2.5 rounded-xl bg-slate-100 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-left text-xs font-medium space-y-1 transition-colors"
+                onClick={() => handleQuickLogin('followup@timetrade.com', 'password123')}
+                className="p-2.5 rounded-xl bg-slate-100 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-left text-xs font-medium space-y-0.5 transition-colors"
               >
                 <span className="text-[10px] font-bold text-emerald-700 uppercase block">Follow-Up</span>
                 <span className="text-slate-900 font-semibold truncate block">Coach Grace</span>
@@ -132,8 +138,8 @@ export default function LoginPage() {
 
               <button
                 type="button"
-                onClick={() => handleQuickLogin('admin@timetrade.com', 'ADMIN')}
-                className="p-2.5 rounded-xl bg-slate-100 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-left text-xs font-medium space-y-1 transition-colors"
+                onClick={() => handleQuickLogin('admin@timetrade.com', 'password123')}
+                className="p-2.5 rounded-xl bg-slate-100 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-left text-xs font-medium space-y-0.5 transition-colors"
               >
                 <span className="text-[10px] font-bold text-amber-800 uppercase block">Admin EXCO</span>
                 <span className="text-slate-900 font-semibold truncate block">Dr. Samuel</span>
@@ -145,7 +151,7 @@ export default function LoginPage() {
         <p className="text-center text-xs text-slate-500">
           Don't have an account yet?{' '}
           <Link href="/register" className="text-brand-600 font-bold hover:underline">
-            Register for the Challenge
+            Register for Challenge
           </Link>
         </p>
       </div>

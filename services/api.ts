@@ -31,6 +31,8 @@ async function fetcher(endpoint: string, options: RequestInit = {}) {
 export const api = {
   // Auth
   register: (body: any) => fetcher('/auth/register', { method: 'POST', body: JSON.stringify(body) }),
+  registerAdmin: (body: any) => fetcher('/auth/admin/register', { method: 'POST', body: JSON.stringify(body) }),
+  getAdminRegistrationStatus: () => fetcher('/auth/admin/status'),
   login: (body: any) => fetcher('/auth/login', { method: 'POST', body: JSON.stringify(body) }),
   getCurrentUser: () => fetcher('/auth/me'),
 
@@ -64,9 +66,14 @@ export const api = {
   // Admin
   getAdminOverview: () => fetcher('/admin/overview'),
   getAllParticipants: () => fetcher('/admin/participants'),
+  updateUserRoles: (id: string, body: { roles: string[]; fullName?: string; phone?: string }) =>
+    fetcher(`/admin/users/${id}/roles`, { method: 'PUT', body: JSON.stringify(body) }),
   assignFollowUp: (followUpId: string, participantId: string) =>
     fetcher('/admin/assign-followup', { method: 'POST', body: JSON.stringify({ followUpId, participantId }) }),
   getPendingTestimonials: () => fetcher('/admin/testimonials/pending'),
   approveTestimonial: (id: string) => fetcher(`/admin/testimonials/${id}/approve`, { method: 'PUT' }),
   getDynamicFormFields: () => fetcher('/admin/forms/fields'),
+  createDynamicFormField: (field: any) => fetcher('/admin/forms/fields', { method: 'POST', body: JSON.stringify(field) }),
+  updateSettings: (settings: { isAdminRegistrationActive: boolean }) =>
+    fetcher('/admin/settings', { method: 'PUT', body: JSON.stringify(settings) }),
 };
