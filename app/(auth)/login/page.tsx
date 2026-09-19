@@ -9,7 +9,7 @@ import { Card } from '../../../components/ui/Card';
 import { Input } from '../../../components/ui/Input';
 import { Button } from '../../../components/ui/Button';
 import { Badge } from '../../../components/ui/Badge';
-import { ArrowRight, Shield, User } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,7 +23,7 @@ export default function LoginPage() {
 
   const redirectUser = (user: any) => {
     const roles = user.rolesList || (user.role ? user.role.split(',') : ['PARTICIPANT']);
-    if (roles.includes('ADMIN')) {
+    if (roles.includes('ADMIN') || roles.includes('LEADERSHIP')) {
       router.push('/admin');
     } else if (roles.includes('FOLLOW_UP')) {
       router.push('/follow-up');
@@ -44,27 +44,10 @@ export default function LoginPage() {
     } catch (err: any) {
       if (err.message?.includes('Password is required')) {
         setShowPassword(true);
-        setError('An Admin/Coach password is required for this email address.');
+        setError('An EXCO team password is required for this email address.');
       } else {
         setError(err.message || 'Login failed');
       }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleQuickLogin = async (userEmail: string, presetPass?: string) => {
-    setEmail(userEmail);
-    if (presetPass) setPassword(presetPass);
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const res = await api.login({ email: userEmail, password: presetPass });
-      setAuth(res.user, res.token);
-      redirectUser(res.user);
-    } catch (err: any) {
-      setError(err.message || 'Quick login failed');
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +81,7 @@ export default function LoginPage() {
 
             {(showPassword || password) && (
               <Input
-                label="Admin Password"
+                label="EXCO Team Password"
                 type="password"
                 placeholder="••••••••"
                 value={password}
@@ -110,42 +93,6 @@ export default function LoginPage() {
               Sign In to Dashboard <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </form>
-
-          {/* Quick Preset Demo Logins */}
-          <div className="pt-3 border-t border-slate-200 space-y-2">
-            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block text-center">
-              Quick Preset Logins (One-Click)
-            </span>
-
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('participant@timetrade.com')}
-                className="p-2.5 rounded-xl bg-slate-100 hover:bg-brand-50 border border-slate-200 hover:border-brand-300 text-left text-xs font-medium space-y-0.5 transition-colors"
-              >
-                <span className="text-[10px] font-bold text-brand-700 uppercase block">Participant</span>
-                <span className="text-slate-900 font-semibold truncate block">David O.</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('followup@timetrade.com', 'password123')}
-                className="p-2.5 rounded-xl bg-slate-100 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-left text-xs font-medium space-y-0.5 transition-colors"
-              >
-                <span className="text-[10px] font-bold text-emerald-700 uppercase block">Follow-Up</span>
-                <span className="text-slate-900 font-semibold truncate block">Coach Grace</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin('admin@timetrade.com', 'password123')}
-                className="p-2.5 rounded-xl bg-slate-100 hover:bg-amber-50 border border-slate-200 hover:border-amber-300 text-left text-xs font-medium space-y-0.5 transition-colors"
-              >
-                <span className="text-[10px] font-bold text-amber-800 uppercase block">Admin EXCO</span>
-                <span className="text-slate-900 font-semibold truncate block">Dr. Samuel</span>
-              </button>
-            </div>
-          </div>
         </Card>
 
         <p className="text-center text-xs text-slate-500">
