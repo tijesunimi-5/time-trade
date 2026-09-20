@@ -47,7 +47,7 @@ export const CommunitySection: React.FC = () => {
           </FadeUp>
           <FadeUp delay={0.2}>
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
-              Surround yourself with people who take intentional living seriously. Your Time Trade brings together a cohort of committed participants growing together.
+              Surround yourself with people who take intentional living seriously. Time Trade brings together a cohort of committed participants growing together.
             </p>
           </FadeUp>
         </div>

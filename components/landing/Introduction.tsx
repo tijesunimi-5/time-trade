@@ -67,7 +67,7 @@ export const Introduction: React.FC = () => {
               ))}
             </div>
             <p className="text-xs text-slate-500 max-w-xl mx-auto pt-2">
-              Your Time Trade creates a structured, intentional space to pause and examine where you currently are—before deciding where you want to go.
+              Time Trade creates a structured, intentional space to pause and examine where you currently are—before deciding where you want to go.
             </p>
           </div>
         </FadeUp>

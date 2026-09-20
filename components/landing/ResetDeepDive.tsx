@@ -59,7 +59,7 @@ export const ResetDeepDive: React.FC = () => {
           </FadeUp>
           <FadeUp delay={0.2}>
             <p className="text-base sm:text-lg text-slate-600">
-              Four fundamental pillars examined during the first 30 days of Your Time Trade.
+              Four fundamental pillars examined during the first 30 days of Time Trade.
             </p>
           </FadeUp>
         </div>

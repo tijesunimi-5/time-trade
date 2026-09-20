@@ -186,10 +186,10 @@ export const Sidebar: React.FC = () => {
       <div className="lg:hidden sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80 px-4 py-3 flex items-center justify-between shadow-subtle-sm w-full">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-md">
-            YTT
+            TT
           </div>
           <span className="font-black text-slate-900 tracking-tight text-xs uppercase">
-            YOUR TIME TRADE
+            TIME TRADE
           </span>
         </Link>
 
@@ -209,11 +209,11 @@ export const Sidebar: React.FC = () => {
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <Link href="/dashboard" className="flex items-center gap-2.5 group">
               <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-md group-hover:scale-105 transition-transform">
-                YTT
+                TT
               </div>
               <div>
                 <span className="font-black text-slate-900 tracking-tight text-sm block leading-none">
-                  YOUR TIME TRADE
+                  TIME TRADE
                 </span>
                 <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wider block mt-0.5">
                   90-Day Challenge
@@ -260,9 +260,9 @@ export const Sidebar: React.FC = () => {
                 <div className="flex items-center justify-between pb-4 border-b border-slate-100">
                   <div className="flex items-center gap-2">
                     <div className="w-7 h-7 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-md">
-                      YTT
+                      TT
                     </div>
-                    <span className="font-black text-slate-900 text-xs">YOUR TIME TRADE</span>
+                    <span className="font-black text-slate-900 text-xs">TIME TRADE</span>
                   </div>
                   <button
                     onClick={() => setIsMobileOpen(false)}

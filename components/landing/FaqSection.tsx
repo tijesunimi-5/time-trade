@@ -10,8 +10,8 @@ export const FaqSection: React.FC = () => {
 
   const faqs = [
     {
-      q: 'What is Your Time Trade?',
-      a: 'Your Time Trade is a structured 90-day personal growth experience designed to help you pause, understand yourself, rebuild habits, and move forward with clarity across your spiritual, mental, and relational life.',
+      q: 'What is Time Trade?',
+      a: 'Time Trade is a structured 90-day personal growth experience designed to help you pause, understand yourself, rebuild habits, and move forward with clarity across your spiritual, mental, and relational life.',
     },
     {
       q: 'Who is it for?',
@@ -27,7 +27,7 @@ export const FaqSection: React.FC = () => {
     },
     {
       q: 'Is this a religious programme?',
-      a: 'Your Time Trade integrates spiritual reflection (prayer and scriptural grounding) alongside mental discipline, emotional intelligence, financial literacy, and community accountability as holistic dimensions of growth.',
+      a: 'Time Trade integrates spiritual reflection (prayer and scriptural grounding) alongside mental discipline, emotional intelligence, financial literacy, and community accountability as holistic dimensions of growth.',
     },
     {
       q: 'How much time should I expect to commit daily?',

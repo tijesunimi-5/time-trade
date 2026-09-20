@@ -8,7 +8,7 @@ import { ToastContainer } from '../components/ui/ToastContainer';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'YOUR TIME TRADE | 90-Day Personal Growth System',
+  title: 'TIME TRADE | 90-Day Personal Growth System',
   description: 'A structured system for continuous consistency across Spiritual, Social, and Mental growth pillars.',
 };
 

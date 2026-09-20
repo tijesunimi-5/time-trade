@@ -60,7 +60,7 @@ export const WeeklyRhythmSection: React.FC = () => {
           </FadeUp>
           <FadeUp delay={0.2}>
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
-              We focus on steady consistency rather than rigid perfection. Here is how a typical week flows in Your Time Trade.
+              We focus on steady consistency rather than rigid perfection. Here is how a typical week flows in Time Trade.
             </p>
           </FadeUp>
         </div>

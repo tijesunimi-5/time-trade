@@ -5,12 +5,17 @@ const API_BASE = (process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API
   ? process.env.NEXT_PUBLIC_API_URL
   : 'https://time-trade-backend.onrender.com/api/v1';
 
-async function fetcher(endpoint: string, options: RequestInit = {}) {
+interface FetcherOptions extends RequestInit {
+  suppressErrorToast?: boolean;
+}
+
+async function fetcher(endpoint: string, options: FetcherOptions = {}) {
   const token = useAuthStore.getState().token;
+  const { suppressErrorToast, ...fetchOptions } = options;
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers as Record<string, string>),
+    ...((fetchOptions.headers as Record<string, string>) || {}),
   };
 
   if (token) {
@@ -19,7 +24,7 @@ async function fetcher(endpoint: string, options: RequestInit = {}) {
 
   try {
     const response = await fetch(`${API_BASE}${endpoint}`, {
-      ...options,
+      ...fetchOptions,
       headers,
     });
 
@@ -27,14 +32,16 @@ async function fetcher(endpoint: string, options: RequestInit = {}) {
 
     if (!response.ok) {
       const errorMsg = data.error || 'API Request Failed';
-      toast.error('Connection Error', errorMsg);
+      if (!suppressErrorToast) {
+        toast.error('Connection Error', errorMsg);
+      }
       throw new Error(errorMsg);
     }
 
     return data;
   } catch (err: any) {
-    if (!err.message || err.message.includes('fetch')) {
-      toast.error('Network Failure', 'Unable to connect to YTT backend server.');
+    if (!suppressErrorToast && (!err.message || err.message.includes('fetch'))) {
+      toast.error('Network Failure', 'Unable to connect to Time Trade backend server.');
     }
     throw err;
   }
@@ -87,7 +94,9 @@ export const api = {
   // Admin CMS & Templates
   getAdminProgrammeTree: () => fetcher('/programme/admin/tree'),
   saveTaskTemplate: (template: any) => fetcher('/programme/admin/template', { method: 'POST', body: JSON.stringify(template) }),
+  deleteTaskTemplate: (id: string) => fetcher(`/programme/admin/template/${id}`, { method: 'DELETE' }),
   saveResource: (resource: any) => fetcher('/programme/admin/resource', { method: 'POST', body: JSON.stringify(resource) }),
+  deleteResource: (id: string) => fetcher(`/programme/admin/resource/${id}`, { method: 'DELETE' }),
   assignTaskToDay: (task: any) => fetcher('/programme/admin/assign-task', { method: 'POST', body: JSON.stringify(task) }),
 
   // Testimonials

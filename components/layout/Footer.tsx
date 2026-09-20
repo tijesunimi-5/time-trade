@@ -9,10 +9,10 @@ export const Footer: React.FC = () => {
         <div className="space-y-4 md:col-span-2">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-md">
-              YTT
+              TT
             </div>
             <span className="text-base font-black tracking-tight text-white uppercase">
-              YOUR TIME TRADE
+              TIME TRADE
             </span>
           </Link>
           <p className="text-xs text-slate-400 max-w-md leading-relaxed">
@@ -66,7 +66,7 @@ export const Footer: React.FC = () => {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 mt-10 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500">
-        <p>&copy; {new Date().getFullYear()} YOUR TIME TRADE. All rights reserved.</p>
+        <p>&copy; {new Date().getFullYear()} TIME TRADE. All rights reserved.</p>
         <p className="mt-2 sm:mt-0 font-medium">Your next 90 days don't have to happen by accident.</p>
       </div>
     </footer>

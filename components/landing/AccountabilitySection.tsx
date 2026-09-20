@@ -29,7 +29,7 @@ export const AccountabilitySection: React.FC = () => {
           </FadeUp>
           <FadeUp delay={0.2}>
             <p className="text-base sm:text-lg text-slate-600 leading-relaxed">
-              Accountability in Your Time Trade is not about pressure or shaming. It is a structure designed to help you stay intentional when daily motivation fluctuates.
+              Accountability in Time Trade is not about pressure or shaming. It is a structure designed to help you stay intentional when daily motivation fluctuates.
             </p>
           </FadeUp>
         </div>

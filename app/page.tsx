@@ -31,7 +31,7 @@ export default function LandingPage() {
         <AccountabilitySection />
         <WeeklyRhythmSection />
         <ExperienceFlowSection />
-        <TestimonialsSection />
+        {/* <TestimonialsSection /> */}
         <FaqSection />
         <FinalCta />
       </main>

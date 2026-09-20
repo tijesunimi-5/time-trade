@@ -43,7 +43,7 @@ export default function AdminSettingsPage() {
     <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
       <Sidebar />
 
-      <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-4xl mx-auto">
+      <div className="flex-1 w-full p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-4xl mx-auto">
         <div className="space-y-1">
           <Badge variant="nonNegotiable">EXCO SETTINGS</Badge>
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900">System Configuration</h1>

@@ -54,10 +54,10 @@ export const Navbar: React.FC = () => {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-md group-hover:scale-105 transition-transform">
-              YTT
+              TT
             </div>
             <span className="font-extrabold text-slate-900 tracking-tight text-base sm:text-lg">
-              YOUR TIME TRADE
+              TIME TRADE
             </span>
           </Link>
 
