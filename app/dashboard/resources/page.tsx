@@ -43,7 +43,7 @@ export default function ResourcesPage() {
   ];
 
   return (
-    <div className="flex min-h-[calc(100vh-65px)] bg-slate-50">
+    <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
       <Sidebar />
       <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-6xl mx-auto">
         <div className="space-y-1">
