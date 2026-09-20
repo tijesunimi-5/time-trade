@@ -1,108 +1,156 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useAuthStore } from '../../store/useAuthStore';
-import { Button } from '../ui/Button';
-import { Shield, Sparkles, User, LogOut, Users } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Menu, X, ArrowRight, Sparkles } from 'lucide-react';
+import { MagneticButton } from '../motion/MagneticButton';
 
 export const Navbar: React.FC = () => {
-  const pathname = usePathname();
-  const { user, logout } = useAuthStore();
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isAuthPage = pathname?.startsWith('/login') || pathname?.startsWith('/register');
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navLinks = [
+    { label: 'About', href: '#about' },
+    { label: 'The Journey', href: '#journey' },
+    { label: 'How It Works', href: '#how-it-works' },
+    { label: 'Community', href: '#community' },
+    { label: 'FAQ', href: '#faq' },
+  ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/90 px-4 lg:px-8 py-3.5 shadow-subtle-sm">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
-        {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-3 group">
-          <div className="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center text-white font-black tracking-tighter shadow-subtle-md group-hover:scale-105 transition-transform">
-            YTT
-          </div>
-          <div>
-            <span className="text-lg font-black tracking-wider text-slate-900 uppercase block leading-none">
+    <>
+      <header
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? 'bg-white/85 backdrop-blur-md border-b border-slate-200/80 py-3 shadow-sm'
+            : 'bg-transparent py-5'
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-md group-hover:scale-105 transition-transform">
+              YTT
+            </div>
+            <span className="font-extrabold text-slate-900 tracking-tight text-base sm:text-lg">
               YOUR TIME TRADE
             </span>
-            <span className="text-[10px] tracking-widest text-brand-600 font-bold uppercase block mt-0.5">
-              90-Day Growth System
-            </span>
-          </div>
-        </Link>
+          </Link>
 
-        {/* Navigation Links */}
-        {!isAuthPage && (
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium">
-            <Link
-              href="/"
-              className={`transition-colors ${pathname === '/' ? 'text-brand-600 font-bold' : 'text-slate-600 hover:text-slate-900'}`}
-            >
-              Overview
-            </Link>
-            {user && (
-              <>
-                <Link
-                  href="/dashboard"
-                  className={`transition-colors ${pathname?.startsWith('/dashboard') ? 'text-brand-600 font-bold' : 'text-slate-600 hover:text-slate-900'}`}
-                >
-                  My Dashboard
-                </Link>
-                {(user.role === 'FOLLOW_UP' || user.role === 'ADMIN') && (
-                  <Link
-                    href="/follow-up"
-                    className={`transition-colors flex items-center gap-1.5 ${pathname?.startsWith('/follow-up') ? 'text-brand-600 font-bold' : 'text-slate-600 hover:text-slate-900'}`}
-                  >
-                    <Users className="w-4 h-4 text-emerald-600" />
-                    Follow-Up Portal
-                  </Link>
-                )}
-                {user.role === 'ADMIN' && (
-                  <Link
-                    href="/admin"
-                    className={`transition-colors flex items-center gap-1.5 ${pathname?.startsWith('/admin') ? 'text-brand-600 font-bold' : 'text-slate-600 hover:text-slate-900'}`}
-                  >
-                    <Shield className="w-4 h-4 text-amber-600" />
-                    Admin EXCO
-                  </Link>
-                )}
-              </>
-            )}
-          </div>
-        )}
-
-        {/* User Auth Buttons */}
-        <div className="flex items-center gap-3">
-          {user ? (
-            <div className="flex items-center gap-3">
-              <div className="hidden sm:flex flex-col items-end">
-                <span className="text-xs font-bold text-slate-900">{user.fullName}</span>
-                <span className="text-[10px] text-brand-600 font-bold uppercase">{user.role}</span>
-              </div>
-              <button
-                onClick={logout}
-                className="p-2 rounded-xl bg-slate-100 text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition-colors"
-                title="Sign out"
+          {/* Desktop Nav Links */}
+          <nav className="hidden md:flex items-center gap-8">
+            {navLinks.map((link) => (
+              <a
+                key={link.label}
+                href={link.href}
+                className="text-xs font-semibold uppercase tracking-wider text-slate-600 hover:text-blue-600 transition-colors relative py-1 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-0 after:h-[2px] after:bg-blue-600 hover:after:w-full after:transition-all after:duration-300"
               >
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <Link href="/login">
-                <Button variant="glass" size="sm">
-                  Sign In
-                </Button>
+                {link.label}
+              </a>
+            ))}
+          </nav>
+
+          {/* Right Action CTA */}
+          <div className="hidden md:flex items-center gap-3">
+            <Link href="/login" className="text-xs font-bold text-slate-600 hover:text-slate-900 px-3 py-2">
+              Sign In
+            </Link>
+
+            <MagneticButton>
+              <Link
+                href="/register"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold uppercase tracking-wider shadow-md hover:shadow-lg transition-all"
+              >
+                <span>Join the 90 Days</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </Link>
-              <Link href="/register">
-                <Button variant="primary" size="sm">
-                  Join Challenge
-                </Button>
-              </Link>
-            </div>
-          )}
+            </MagneticButton>
+          </div>
+
+          {/* Mobile Menu Toggle Button */}
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+            aria-label="Toggle Navigation Menu"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
         </div>
-      </div>
-    </nav>
+      </header>
+
+      {/* Premium Mobile Navigation Animated Drawer */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm md:hidden"
+            onClick={() => setMobileMenuOpen(false)}
+          >
+            <motion.div
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="absolute right-0 top-0 bottom-0 w-4/5 max-w-sm bg-white p-6 shadow-2xl flex flex-col justify-between"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="space-y-6 pt-16">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold uppercase tracking-wider">
+                  <Sparkles className="w-3 h-3" />
+                  90 Days • Intentional Growth
+                </div>
+
+                <nav className="flex flex-col gap-4">
+                  {navLinks.map((link) => (
+                    <a
+                      key={link.label}
+                      href={link.href}
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-lg font-bold text-slate-800 hover:text-blue-600 transition-colors py-2 border-b border-slate-100"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
+                </nav>
+              </div>
+
+              <div className="space-y-3 pt-6 border-t border-slate-100">
+                <Link
+                  href="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-blue-600 text-white font-bold text-sm shadow-md"
+                >
+                  <span>Join the 90 Days</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center block py-2.5 text-xs font-bold text-slate-600 hover:text-slate-900"
+                >
+                  Participant Sign In
+                </Link>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
