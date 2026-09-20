@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -20,7 +20,13 @@ import { useAuthStore } from '../../store/useAuthStore';
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout, initAuth } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    initAuth();
+    setMounted(true);
+  }, [initAuth]);
 
   const handleLogout = () => {
     logout();
@@ -39,11 +45,16 @@ export const Sidebar: React.FC = () => {
   ];
 
   const isExco =
-    user?.rolesList?.some((r: string) =>
+    mounted &&
+    (user?.rolesList?.some((r: string) =>
       ['LEADERSHIP', 'ADMIN', 'COMMUNITY_MANAGEMENT', 'FOLLOW_UP', 'PROGRAM_PLANNING', 'MEDIA', 'CONTENT'].includes(r)
     ) ||
-    user?.role?.includes('ADMIN') ||
-    user?.role?.includes('LEADERSHIP');
+      user?.role?.includes('ADMIN') ||
+      user?.role?.includes('LEADERSHIP'));
+
+  const showFollowUp =
+    mounted &&
+    (user?.role?.includes('FOLLOW_UP') || user?.role?.includes('ADMIN') || user?.role?.includes('LEADERSHIP'));
 
   const adminLinks = [
     { href: '/admin', label: 'Overview Analytics', icon: Shield },
@@ -73,8 +84,8 @@ export const Sidebar: React.FC = () => {
           </Link>
         </div>
 
-        {/* User Info Card */}
-        {user && (
+        {/* User Info Card (rendered only after mounted to prevent SSR hydration mismatch) */}
+        {mounted && user && (
           <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70 space-y-1">
             <div className="text-xs font-bold text-slate-900 truncate">{user.fullName}</div>
             <div className="text-[10px] text-slate-500 truncate">{user.email}</div>
@@ -115,7 +126,7 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Follow-up Section */}
-        {(user?.role?.includes('FOLLOW_UP') || user?.role?.includes('ADMIN') || user?.role?.includes('LEADERSHIP')) && (
+        {showFollowUp && (
           <div>
             <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest px-3 mb-2">
               Follow-Up System

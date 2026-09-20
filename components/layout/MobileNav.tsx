@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Calendar, Trophy, BookOpen, Users, Shield } from 'lucide-react';
@@ -8,9 +8,15 @@ import { useAuthStore } from '../../store/useAuthStore';
 
 export const MobileNav: React.FC = () => {
   const pathname = usePathname();
-  const { user } = useAuthStore();
+  const { user, initAuth } = useAuthStore();
+  const [mounted, setMounted] = useState(false);
 
-  if (!user || pathname === '/' || pathname?.startsWith('/login') || pathname?.startsWith('/register')) {
+  useEffect(() => {
+    initAuth();
+    setMounted(true);
+  }, [initAuth]);
+
+  if (!mounted || !user || pathname === '/' || pathname?.startsWith('/login') || pathname?.startsWith('/register')) {
     return null;
   }
 
@@ -21,11 +27,11 @@ export const MobileNav: React.FC = () => {
     { href: '/dashboard/resources', label: 'Library', icon: BookOpen },
   ];
 
-  if (user.role === 'FOLLOW_UP' || user.role === 'ADMIN') {
+  if (user.role?.includes('FOLLOW_UP') || user.role?.includes('ADMIN') || user.role?.includes('LEADERSHIP')) {
     links.push({ href: '/follow-up', label: 'Follow-Up', icon: Users });
   }
 
-  if (user.role === 'ADMIN') {
+  if (user.role?.includes('ADMIN') || user.role?.includes('LEADERSHIP')) {
     links.push({ href: '/admin', label: 'EXCO', icon: Shield });
   }
 
