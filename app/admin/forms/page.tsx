@@ -6,20 +6,22 @@ import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { Loader } from '../../../components/ui/Loader';
 import { api } from '../../../services/api';
 import { useAuthStore } from '../../../store/useAuthStore';
+import { toast } from '../../../store/useToastStore';
 import {
   FileText,
   Plus,
   Trash2,
+  Edit2,
   ArrowUp,
   ArrowDown,
   CheckCircle2,
-  AlertCircle,
-  Settings2,
-  Layers,
   Sparkles,
   Lock,
+  X,
+  ListPlus,
 } from 'lucide-react';
 
 interface QuestionField {
@@ -36,7 +38,7 @@ interface QuestionField {
 export default function AdminFormsBuilderPage() {
   const user = useAuthStore((state) => state.user);
   const userRoles = user?.rolesList || (user?.role ? user.role.split(',') : []);
-  
+
   // Can edit if Leadership, Admin, Community Management, or Follow-Up
   const canEdit = userRoles.some((r: string) =>
     ['LEADERSHIP', 'ADMIN', 'COMMUNITY_MANAGEMENT', 'FOLLOW_UP'].includes(r.trim())
@@ -44,8 +46,7 @@ export default function AdminFormsBuilderPage() {
 
   const [questions, setQuestions] = useState<QuestionField[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [saveStatus, setSaveStatus] = useState('');
-  
+
   // New Question Form Modal State
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newLabel, setNewLabel] = useState('');
@@ -53,6 +54,15 @@ export default function AdminFormsBuilderPage() {
   const [newIsRequired, setNewIsRequired] = useState(false);
   const [newOptionsList, setNewOptionsList] = useState<string[]>(['Option 1', 'Option 2']);
   const [newOptionInput, setNewOptionInput] = useState('');
+
+  // Edit Question Modal State
+  const [editingQuestion, setEditingQuestion] = useState<QuestionField | null>(null);
+  const [editLabel, setEditLabel] = useState('');
+  const [editType, setEditType] = useState<'text' | 'textarea' | 'select' | 'multiselect' | 'date'>('text');
+  const [editIsRequired, setEditIsRequired] = useState(false);
+  const [editIsActive, setEditIsActive] = useState(true);
+  const [editOptionsList, setEditOptionsList] = useState<string[]>([]);
+  const [editOptionInput, setEditOptionInput] = useState('');
 
   useEffect(() => {
     fetchQuestions();
@@ -76,7 +86,7 @@ export default function AdminFormsBuilderPage() {
 
     try {
       const fieldData = {
-        label: newLabel,
+        label: newLabel.trim(),
         fieldType: newType,
         isRequired: newIsRequired,
         options: ['select', 'multiselect'].includes(newType) ? newOptionsList : undefined,
@@ -85,30 +95,53 @@ export default function AdminFormsBuilderPage() {
       };
 
       await api.createDynamicFormField(fieldData);
-      setSaveStatus('Question created successfully!');
+      toast.success('Question Created', `"${newLabel.trim()}" added to registration questions.`);
       setIsAddingNew(false);
       setNewLabel('');
       setNewType('text');
       setNewIsRequired(false);
       setNewOptionsList(['Option 1', 'Option 2']);
       fetchQuestions();
-      setTimeout(() => setSaveStatus(''), 3000);
     } catch (err: any) {
-      alert(err.message || 'Failed to create question');
+      toast.error('Creation Failed', err.message || 'Failed to create question');
     }
   };
 
-  const handleUpdateField = async (id: string, updates: Partial<QuestionField>) => {
-    if (!canEdit) return;
+  const openEditModal = (q: QuestionField) => {
+    setEditingQuestion(q);
+    setEditLabel(q.label);
+    setEditType(q.fieldType);
+    setEditIsRequired(q.isRequired);
+    setEditIsActive(q.isActive);
+    let parsed: string[] = [];
     try {
-      await api.updateDynamicFormField(id, updates);
-      setQuestions((prev) =>
-        prev.map((q) => (q.id === id ? { ...q, ...updates } : q))
-      );
-      setSaveStatus('Question updated');
-      setTimeout(() => setSaveStatus(''), 2000);
+      parsed = q.options ? JSON.parse(q.options) : [];
+    } catch {
+      parsed = [];
+    }
+    setEditOptionsList(parsed);
+    setEditOptionInput('');
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingQuestion || !editLabel.trim()) return;
+
+    try {
+      const updates = {
+        label: editLabel.trim(),
+        fieldType: editType,
+        isRequired: editIsRequired,
+        isActive: editIsActive,
+        options: ['select', 'multiselect'].includes(editType) ? editOptionsList : undefined,
+      };
+
+      await api.updateDynamicFormField(editingQuestion.id, updates);
+      toast.success('Question Updated', `Changes to "${editLabel.trim()}" saved successfully.`);
+      setEditingQuestion(null);
+      fetchQuestions();
     } catch (err: any) {
-      alert(err.message || 'Failed to update question');
+      toast.error('Update Failed', err.message || 'Failed to update question');
     }
   };
 
@@ -118,11 +151,10 @@ export default function AdminFormsBuilderPage() {
 
     try {
       await api.deleteDynamicFormField(id);
+      toast.success('Question Deleted', `"${label}" removed.`);
       setQuestions((prev) => prev.filter((q) => q.id !== id));
-      setSaveStatus('Question deleted');
-      setTimeout(() => setSaveStatus(''), 2000);
     } catch (err: any) {
-      alert(err.message || 'Failed to delete question');
+      toast.error('Delete Failed', err.message || 'Failed to delete question');
     }
   };
 
@@ -136,7 +168,6 @@ export default function AdminFormsBuilderPage() {
     updated[index] = updated[newIdx];
     updated[newIdx] = temp;
 
-    // Update display orders
     const fieldOrders = updated.map((q, idx) => ({ id: q.id, displayOrder: idx + 1 }));
     setQuestions(updated);
 
@@ -147,6 +178,7 @@ export default function AdminFormsBuilderPage() {
     }
   };
 
+  // New option handlers
   const handleAddOptionToNew = () => {
     if (!newOptionInput.trim()) return;
     setNewOptionsList([...newOptionsList, newOptionInput.trim()]);
@@ -157,6 +189,17 @@ export default function AdminFormsBuilderPage() {
     setNewOptionsList(newOptionsList.filter((_, i) => i !== optIdx));
   };
 
+  // Edit option handlers
+  const handleAddOptionToEdit = () => {
+    if (!editOptionInput.trim()) return;
+    setEditOptionsList([...editOptionsList, editOptionInput.trim()]);
+    setEditOptionInput('');
+  };
+
+  const handleRemoveOptionFromEdit = (optIdx: number) => {
+    setEditOptionsList(editOptionsList.filter((_, i) => i !== optIdx));
+  };
+
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
       <Sidebar />
@@ -165,12 +208,12 @@ export default function AdminFormsBuilderPage() {
         {/* Header Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <Badge variant="cyan">GOOGLE-FORMS STYLE BUILDER</Badge>
+            <Badge variant="cyan">ADVANCED FORM BUILDER</Badge>
             <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-              Registration Questions Builder
+              Registration Questions & Options CMS
             </h1>
             <p className="text-xs text-slate-500">
-              Customize questions shown to participants during 90-day registration.
+              Configure dynamic participant registration questions, dropdown options, and field types.
             </p>
           </div>
 
@@ -191,15 +234,8 @@ export default function AdminFormsBuilderPage() {
           <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-center gap-3 text-amber-900 text-xs font-semibold">
             <Lock className="w-5 h-5 text-amber-600 shrink-0" />
             <div>
-              <span className="font-bold">Read-Only View:</span> Only Leadership, Community Management, and Follow-Up team members can create or modify registration questions.
+              <span className="font-bold">Read-Only View:</span> Only Leadership, Community Management, and Follow-Up team members can modify registration questions.
             </div>
-          </div>
-        )}
-
-        {saveStatus && (
-          <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>{saveStatus}</span>
           </div>
         )}
 
@@ -311,7 +347,7 @@ export default function AdminFormsBuilderPage() {
 
         {/* Existing Questions List */}
         {isLoading ? (
-          <div className="p-12 text-center text-slate-500 font-medium">Loading form questions...</div>
+          <Loader variant="card" text="Loading dynamic registration questions..." />
         ) : questions.length === 0 ? (
           <div className="p-12 text-center text-slate-500 bg-white rounded-2xl border border-slate-200">
             No dynamic questions configured yet. Click "+ Add New Question" to create one.
@@ -357,6 +393,14 @@ export default function AdminFormsBuilderPage() {
                     {canEdit && (
                       <div className="flex items-center gap-1.5">
                         <button
+                          onClick={() => openEditModal(q)}
+                          className="p-1.5 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors flex items-center gap-1 text-xs font-bold"
+                          title="Edit Question & Options"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          <span>Edit</span>
+                        </button>
+                        <button
                           onClick={() => handleMove(idx, 'up')}
                           disabled={idx === 0}
                           className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30"
@@ -383,59 +427,28 @@ export default function AdminFormsBuilderPage() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                    <div className="md:col-span-7 space-y-2">
-                      {canEdit ? (
-                        <input
-                          type="text"
-                          value={q.label}
-                          onChange={(e) =>
-                            setQuestions((prev) =>
-                              prev.map((item) => (item.id === q.id ? { ...item, label: e.target.value } : item))
-                            )
-                          }
-                          onBlur={(e) => handleUpdateField(q.id, { label: e.target.value })}
-                          className="w-full text-base font-bold text-slate-900 border-b border-transparent hover:border-slate-300 focus:border-blue-600 focus:outline-none bg-transparent py-1"
-                        />
-                      ) : (
-                        <div className="text-base font-bold text-slate-900">{q.label}</div>
-                      )}
+                  <div className="space-y-2">
+                    <h3 className="text-base font-bold text-slate-900">{q.label}</h3>
 
-                      {['select', 'multiselect'].includes(q.fieldType) && (
-                        <div className="flex flex-wrap gap-1.5 pt-1">
-                          {parsedOptions.map((opt, i) => (
-                            <span
-                              key={i}
-                              className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 text-[11px] font-semibold"
-                            >
-                              {opt}
-                            </span>
-                          ))}
+                    {['select', 'multiselect'].includes(q.fieldType) && (
+                      <div className="space-y-1.5 pt-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                          Configured Choices ({parsedOptions.length}):
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {parsedOptions.length === 0 ? (
+                            <span className="text-xs text-amber-600 italic">No options configured. Click Edit to add choices.</span>
+                          ) : (
+                            parsedOptions.map((opt, i) => (
+                              <span
+                                key={i}
+                                className="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 text-xs font-semibold border border-slate-200"
+                              >
+                                {opt}
+                              </span>
+                            ))
+                          )}
                         </div>
-                      )}
-                    </div>
-
-                    {canEdit && (
-                      <div className="md:col-span-5 flex items-center justify-end gap-4">
-                        <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={q.isRequired}
-                            onChange={(e) => handleUpdateField(q.id, { isRequired: e.target.checked })}
-                            className="w-4 h-4 text-blue-600 rounded"
-                          />
-                          Required
-                        </label>
-
-                        <label className="flex items-center gap-2 text-xs font-bold text-slate-600 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={q.isActive}
-                            onChange={(e) => handleUpdateField(q.id, { isActive: e.target.checked })}
-                            className="w-4 h-4 text-emerald-600 rounded"
-                          />
-                          Active
-                        </label>
                       </div>
                     )}
                   </div>
@@ -445,6 +458,141 @@ export default function AdminFormsBuilderPage() {
           </div>
         )}
       </div>
+
+      {/* Edit Question Modal */}
+      {editingQuestion && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <Card variant="glass" className="max-w-lg w-full p-6 space-y-5 bg-white border-2 border-blue-500 shadow-2xl my-8">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2">
+                <Edit2 className="w-5 h-5 text-blue-600" />
+                <h3 className="text-base font-bold text-slate-900">Edit Registration Question</h3>
+              </div>
+              <button
+                onClick={() => setEditingQuestion(null)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="space-y-4">
+              <Input
+                label="Question Title / Prompt"
+                value={editLabel}
+                onChange={(e) => setEditLabel(e.target.value)}
+                required
+                placeholder="Question text..."
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Answer Type
+                  </label>
+                  <select
+                    value={editType}
+                    onChange={(e: any) => setEditType(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs font-bold text-slate-800 bg-white"
+                  >
+                    <option value="text">Short Text Input</option>
+                    <option value="textarea">Paragraph / Long Text</option>
+                    <option value="select">Single Choice Dropdown</option>
+                    <option value="multiselect">Multiple Choice Checkboxes</option>
+                    <option value="date">Date of Birth / Date</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-4 pt-6">
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editIsRequired}
+                      onChange={(e) => setEditIsRequired(e.target.checked)}
+                      className="w-4 h-4 text-blue-600 rounded"
+                    />
+                    Required
+                  </label>
+
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={editIsActive}
+                      onChange={(e) => setEditIsActive(e.target.checked)}
+                      className="w-4 h-4 text-emerald-600 rounded"
+                    />
+                    Active
+                  </label>
+                </div>
+              </div>
+
+              {/* Options Builder for Select & Multiselect in Edit Modal */}
+              {['select', 'multiselect'].includes(editType) && (
+                <div className="space-y-2 p-4 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                      Choice Options Manager
+                    </label>
+                    <span className="text-[10px] font-bold text-slate-500">
+                      {editOptionsList.length} options
+                    </span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Add an option choice..."
+                      value={editOptionInput}
+                      onChange={(e) => setEditOptionInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleAddOptionToEdit();
+                        }
+                      }}
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    />
+                    <Button type="button" variant="secondary" size="sm" onClick={handleAddOptionToEdit}>
+                      Add Option
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {editOptionsList.length === 0 ? (
+                      <span className="text-xs text-slate-400 italic">No option choices added yet.</span>
+                    ) : (
+                      editOptionsList.map((opt, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-300 text-xs font-bold text-slate-800 shadow-xs"
+                        >
+                          {opt}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveOptionFromEdit(i)}
+                            className="text-rose-500 hover:text-rose-700 font-bold text-xs ml-1"
+                          >
+                            &times;
+                          </button>
+                        </span>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <Button type="button" variant="glass" size="sm" onClick={() => setEditingQuestion(null)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" size="sm">
+                  Save Changes
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
