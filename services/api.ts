@@ -1,4 +1,5 @@
 import { useAuthStore } from '../store/useAuthStore';
+import { toast } from '../store/useToastStore';
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL.trim() !== '')
   ? process.env.NEXT_PUBLIC_API_URL
@@ -16,18 +17,27 @@ async function fetcher(endpoint: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  const data = await response.json();
+    const data = await response.json();
 
-  if (!response.ok) {
-    throw new Error(data.error || 'API Request Failed');
+    if (!response.ok) {
+      const errorMsg = data.error || 'API Request Failed';
+      toast.error('Connection Error', errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    return data;
+  } catch (err: any) {
+    if (!err.message || err.message.includes('fetch')) {
+      toast.error('Network Failure', 'Unable to connect to YTT backend server.');
+    }
+    throw err;
   }
-
-  return data;
 }
 
 export const api = {

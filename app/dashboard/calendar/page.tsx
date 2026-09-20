@@ -7,6 +7,8 @@ import { Badge } from '../../../components/ui/Badge';
 import { ProgressBar } from '../../../components/ui/ProgressBar';
 import { TaskCard } from '../../../components/features/TaskCard';
 import { api } from '../../../services/api';
+import { Loader } from '../../../components/ui/Loader';
+import { toast } from '../../../store/useToastStore';
 import {
   Calendar as CalendarIcon,
   Lock,
@@ -192,9 +194,7 @@ export default function CalendarPage() {
 
         {/* Selected Phase View */}
         {isLoading ? (
-          <div className="p-12 text-center text-slate-500 glass-panel rounded-2xl">
-            Loading 90-day calendar overview...
-          </div>
+          <Loader variant="card" text="Loading 90-day calendar overview..." />
         ) : (
           <div className="space-y-6">
             {/* Week-by-Week Breakdown */}

@@ -7,6 +7,8 @@ import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { api } from '../../../services/api';
+import { Loader } from '../../../components/ui/Loader';
+import { toast } from '../../../store/useToastStore';
 import { Plus, Trash2, BookOpen, Layers, CheckSquare, Sparkles, FolderPlus } from 'lucide-react';
 
 export default function AdminTasksPage() {
@@ -77,9 +79,12 @@ export default function AdminTasksPage() {
         discussionQuestions: discussionQuestions || undefined,
       });
       setShowTaskModal(false);
+      toast.success('Task Assigned', `"${taskTitle}" successfully published.`);
+      setTaskTitle('');
+      setTaskDesc('');
       loadAdminTree();
     } catch (err: any) {
-      alert(err.message || 'Failed to assign task');
+      toast.error('Task Assignment Failed', err.message || 'Unable to publish task');
     }
   };
 
@@ -93,11 +98,12 @@ export default function AdminTasksPage() {
         taskType: templateType,
       });
       setShowTemplateModal(false);
+      toast.success('Template Created', `"${templateTitle}" added to templates library.`);
       setTemplateTitle('');
       setTemplateDesc('');
       loadAdminTree();
     } catch (err: any) {
-      alert(err.message || 'Failed to save template');
+      toast.error('Template Creation Failed', err.message || 'Unable to save template');
     }
   };
 
@@ -111,12 +117,13 @@ export default function AdminTasksPage() {
         url: resourceUrl || undefined,
       });
       setShowResourceModal(false);
+      toast.success('Resource Added', `"${resourceTitle}" cataloged successfully.`);
       setResourceTitle('');
       setResourceAuthor('');
       setResourceUrl('');
       loadAdminTree();
     } catch (err: any) {
-      alert(err.message || 'Failed to save resource');
+      toast.error('Resource Creation Failed', err.message || 'Unable to save resource');
     }
   };
 

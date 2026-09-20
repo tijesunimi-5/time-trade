@@ -9,6 +9,8 @@ import { TaskCard, Task } from '../../components/features/TaskCard';
 import { WhatsAppCommunityBanner } from '../../components/features/WhatsAppCommunityBanner';
 import { useAuthStore } from '../../store/useAuthStore';
 import { api } from '../../services/api';
+import { Loader } from '../../components/ui/Loader';
+import { toast } from '../../store/useToastStore';
 import { Flame, CheckCircle2, Trophy, Target, Sparkles, BookOpen, Plus, X } from 'lucide-react';
 
 export default function ParticipantDashboard() {
@@ -91,6 +93,7 @@ export default function ParticipantDashboard() {
       });
       setNewTitle('');
       setShowAddModal(false);
+      toast.success('Habit Created', `"${newTitle.trim()}" added to your growth checklist.`);
       // Refresh day details
       const updatedDay = await api.getDayDetails();
       if (updatedDay?.tasks) setTasks(updatedDay.tasks);
@@ -273,9 +276,7 @@ export default function ParticipantDashboard() {
           </div>
 
           {isLoading ? (
-            <div className="p-12 text-center text-slate-500 glass-panel rounded-2xl">
-              Loading today's assigned growth tasks...
-            </div>
+            <Loader variant="card" text="Loading today's assigned growth tasks..." />
           ) : filteredTasks.length === 0 ? (
             <div className="p-12 text-center text-slate-500 glass-panel rounded-2xl space-y-2">
               <p className="text-sm font-semibold text-slate-700">No tasks found for this filter.</p>
