@@ -60,6 +60,26 @@ export const api = {
   // Calendar
   getCalendarEvents: () => fetcher('/calendar'),
 
+  // Calendar & Programme Architecture
+  getCurrentProgramme: () => fetcher('/programme/current'),
+  getDayDetails: (day?: number, date?: string) => {
+    const params = new URLSearchParams();
+    if (day) params.append('day', day.toString());
+    if (date) params.append('date', date);
+    const q = params.toString();
+    return fetcher(`/programme/day${q ? `?${q}` : ''}`);
+  },
+  getCalendarOverview: () => fetcher('/programme/calendar'),
+  addPersonalTask: (body: { title: string; category?: string; durationMinutes?: number }) =>
+    fetcher('/programme/personal-task', { method: 'POST', body: JSON.stringify(body) }),
+  deletePersonalTask: (id: string) => fetcher(`/programme/personal-task/${id}`, { method: 'DELETE' }),
+
+  // Admin CMS & Templates
+  getAdminProgrammeTree: () => fetcher('/programme/admin/tree'),
+  saveTaskTemplate: (template: any) => fetcher('/programme/admin/template', { method: 'POST', body: JSON.stringify(template) }),
+  saveResource: (resource: any) => fetcher('/programme/admin/resource', { method: 'POST', body: JSON.stringify(resource) }),
+  assignTaskToDay: (task: any) => fetcher('/programme/admin/assign-task', { method: 'POST', body: JSON.stringify(task) }),
+
   // Testimonials
   getPublicTestimonials: () => fetcher('/testimonials'),
   submitTestimonial: (content: string, isPublic = true) =>

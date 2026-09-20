@@ -3,10 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { usePathname } from 'next/navigation';
 import { Menu, X, ArrowRight, Sparkles } from 'lucide-react';
 import { MagneticButton } from '../motion/MagneticButton';
 
 export const Navbar: React.FC = () => {
+  const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -21,6 +23,15 @@ export const Navbar: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  // Do not render landing navbar on internal app routes
+  if (
+    pathname?.startsWith('/dashboard') ||
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/follow-up')
+  ) {
+    return null;
+  }
 
   const navLinks = [
     { label: 'About', href: '#about' },

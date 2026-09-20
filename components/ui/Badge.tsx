@@ -2,7 +2,18 @@ import React from 'react';
 import { cn } from '../../utils/cn';
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?: 'spiritual' | 'mental' | 'social' | 'nonNegotiable' | 'active' | 'attention' | 'inactive' | 'cyan';
+  variant?:
+    | 'spiritual'
+    | 'mental'
+    | 'social'
+    | 'nonNegotiable'
+    | 'active'
+    | 'attention'
+    | 'inactive'
+    | 'cyan'
+    | 'emerald'
+    | 'slate'
+    | 'purple';
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -22,10 +33,13 @@ export const Badge: React.FC<BadgeProps> = ({
     attention: 'bg-amber-50 text-amber-700 border-amber-200',
     inactive: 'bg-rose-50 text-rose-700 border-rose-200',
     cyan: 'bg-blue-50 text-brand-700 border-brand-200',
+    emerald: 'bg-emerald-50 text-emerald-800 border-emerald-300',
+    slate: 'bg-slate-100 text-slate-700 border-slate-300',
+    purple: 'bg-purple-50 text-purple-800 border-purple-300',
   };
 
   return (
-    <span className={cn(base, variants[variant], className)} {...props}>
+    <span className={cn(base, variants[variant] || variants.cyan, className)} {...props}>
       {children}
     </span>
   );

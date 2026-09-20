@@ -9,25 +9,39 @@ import { TaskCard, Task } from '../../components/features/TaskCard';
 import { WhatsAppCommunityBanner } from '../../components/features/WhatsAppCommunityBanner';
 import { useAuthStore } from '../../store/useAuthStore';
 import { api } from '../../services/api';
-import { Flame, CheckCircle2, Trophy, Target, Sparkles } from 'lucide-react';
+import { Flame, CheckCircle2, Trophy, Target, Sparkles, BookOpen, Plus, X } from 'lucide-react';
 
 export default function ParticipantDashboard() {
   const { user } = useAuthStore();
+  const [programmeInfo, setProgrammeInfo] = useState<any>(null);
+  const [dayData, setDayData] = useState<any>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [progress, setProgress] = useState<any>(null);
   const [activePillar, setActivePillar] = useState<'ALL' | 'SPIRITUAL' | 'MENTAL' | 'SOCIAL'>('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  // Add Personal Task Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newCategory, setNewCategory] = useState('Personal');
+  const [newDuration, setNewDuration] = useState('30');
+  const [isAdding, setIsAdding] = useState(false);
+
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [tasksRes, progressRes] = await Promise.all([
-        api.getTodayTasks(),
-        api.getProgress(),
+      const [progRes, dayRes, progressRes] = await Promise.all([
+        api.getCurrentProgramme().catch(() => null),
+        api.getDayDetails().catch(() => null),
+        api.getProgress().catch(() => null),
       ]);
 
-      setTasks(tasksRes.tasks);
+      setProgrammeInfo(progRes);
+      setDayData(dayRes);
+      if (dayRes?.tasks) {
+        setTasks(dayRes.tasks);
+      }
       setProgress(progressRes);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
@@ -41,6 +55,8 @@ export default function ParticipantDashboard() {
   }, []);
 
   const handleToggleTask = async (taskId: string) => {
+    if (dayData && !dayData.isToday) return;
+
     setTogglingId(taskId);
     // Optimistic UI update
     setTasks((prev) =>
@@ -48,10 +64,9 @@ export default function ParticipantDashboard() {
     );
 
     try {
-      await api.toggleTask(taskId);
-      // Refresh progress data in background
-      const updatedProgress = await api.getProgress();
-      setProgress(updatedProgress);
+      await api.toggleTask(taskId, dayData?.targetDate);
+      const updatedProgress = await api.getProgress().catch(() => null);
+      if (updatedProgress) setProgress(updatedProgress);
     } catch (err) {
       console.error('Task toggle error:', err);
       // Revert on error
@@ -63,6 +78,29 @@ export default function ParticipantDashboard() {
     }
   };
 
+  const handleAddPersonalTask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+
+    try {
+      setIsAdding(true);
+      await api.addPersonalTask({
+        title: newTitle.trim(),
+        category: newCategory,
+        durationMinutes: parseInt(newDuration, 10) || 30,
+      });
+      setNewTitle('');
+      setShowAddModal(false);
+      // Refresh day details
+      const updatedDay = await api.getDayDetails();
+      if (updatedDay?.tasks) setTasks(updatedDay.tasks);
+    } catch (err) {
+      console.error('Failed to add personal task:', err);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
   const filteredTasks = tasks.filter((t) => {
     if (activePillar === 'ALL') return true;
     return t.pillar === activePillar;
@@ -70,26 +108,30 @@ export default function ParticipantDashboard() {
 
   const completedTodayCount = tasks.filter((t) => t.isCompleted).length;
   const totalTodayCount = tasks.length;
+  const currentDayNum = programmeInfo?.currentDayNumber || dayData?.dayNumber || 1;
 
   return (
-    <div className="flex min-h-[calc(100vh-65px)] bg-slate-50">
+    <div className="flex min-h-screen bg-slate-50">
       <Sidebar />
 
       <div className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-6xl mx-auto">
         {/* Header Day & Phase Banner */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-5 sm:p-6 rounded-2xl border-slate-200 shadow-subtle-sm relative overflow-hidden">
-          <div className="space-y-1 z-10">
-            <div className="flex items-center gap-2">
-              <Badge variant="cyan">DAY 17 / 90</Badge>
+          <div className="space-y-1.5 z-10">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant="cyan">DAY {currentDayNum} / 90</Badge>
+              <span className="text-[10px] sm:text-xs font-black text-brand-700 uppercase tracking-widest bg-brand-50 px-2.5 py-0.5 rounded border border-brand-200">
+                PHASE {programmeInfo?.currentPhaseNumber || 1}: {programmeInfo?.currentPhaseTitle || 'RESET'}
+              </span>
               <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">
-                MONTH 1: RESET, RESTART, REFOCUS
+                WEEK {programmeInfo?.currentWeekNumber || 1}: {programmeInfo?.currentWeekTheme || 'Reset Your Mindset'}
               </span>
             </div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900">
               Welcome back, {user?.fullName || 'Participant'}
             </h1>
             <p className="text-xs text-slate-600">
-              Focus on today's daily non-negotiables to keep your consistency streak alive.
+              Today's Focus: <span className="font-bold text-slate-800">{dayData?.dayFocus || 'Examine patterns & non-negotiable spiritual/mental habits'}</span>
             </p>
           </div>
 
@@ -98,7 +140,7 @@ export default function ParticipantDashboard() {
               <Flame className="w-7 h-7 text-amber-500 fill-amber-500 animate-pulse" />
               <div>
                 <span className="text-xl font-black text-slate-900 block leading-none">
-                  {progress?.streak?.currentStreak || 12} DAYS
+                  {progress?.streak?.currentStreak || 0} DAYS
                 </span>
                 <span className="text-[10px] font-extrabold text-amber-800 uppercase tracking-widest">
                   Current Streak
@@ -108,7 +150,32 @@ export default function ParticipantDashboard() {
           </div>
         </div>
 
-        {/* 7 Core Answers Summary Cards */}
+        {/* Current Week Anchor Resource Spotlight */}
+        {programmeInfo?.anchorResource && (
+          <div className="bg-gradient-to-r from-cyan-900 via-blue-900 to-indigo-900 text-white p-4 sm:p-5 rounded-2xl shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur flex items-center justify-center shrink-0">
+                <BookOpen className="w-5 h-5 text-cyan-300" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-300 block">
+                  Week {programmeInfo.currentWeekNumber} Anchor Resource
+                </span>
+                <h3 className="text-sm sm:text-base font-bold text-white">
+                  {programmeInfo.anchorResource}
+                </h3>
+              </div>
+            </div>
+            <a
+              href="/dashboard/calendar"
+              className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-cyan-400 hover:bg-cyan-300 text-slate-950 font-bold text-xs transition-colors shrink-0"
+            >
+              View Full 90-Day Calendar &rarr;
+            </a>
+          </div>
+        )}
+
+        {/* Core Progress Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card variant="glass" className="space-y-2 p-4 sm:p-6">
             <div className="flex items-center justify-between">
@@ -126,41 +193,43 @@ export default function ParticipantDashboard() {
           <Card variant="glass" className="space-y-2 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
-                Weekly Target
+                Total Completed
               </span>
               <Target className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-600" />
             </div>
             <div className="text-lg sm:text-2xl font-black text-slate-900">
-              19 / 25
+              {progress?.streak?.totalCompleted || 0} Tasks
             </div>
-            <ProgressBar progress={76} color="emerald" />
+            <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block">
+              Cumulative Growth Total
+            </span>
           </Card>
 
           <Card variant="glass" className="space-y-2 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
-                90-Day Progress
+                90-Day Consistency
               </span>
               <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600" />
             </div>
             <div className="text-lg sm:text-2xl font-black text-slate-900">
-              {progress?.streak?.overallPercentage || 62}% OVERALL
+              {Math.round(progress?.streak?.overallPercentage || 0)}% OVERALL
             </div>
-            <ProgressBar progress={progress?.streak?.overallPercentage || 62} color="purple" />
+            <ProgressBar progress={progress?.streak?.overallPercentage || 0} color="purple" />
           </Card>
 
           <Card variant="glass" className="space-y-2 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-500">
-                Current Rank
+                Longest Streak
               </span>
               <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500" />
             </div>
             <div className="text-lg sm:text-2xl font-black text-slate-900">
-              RANK #4 GLOBAL
+              {progress?.streak?.longestStreak || 0} DAYS
             </div>
-            <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider block">
-              Top 5% Consistency Cohort
+            <span className="text-[10px] text-amber-800 font-bold uppercase tracking-wider block">
+              Personal Record
             </span>
           </Card>
         </div>
@@ -172,8 +241,17 @@ export default function ParticipantDashboard() {
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg sm:text-xl font-black text-slate-900">Today's Growth Checklist</h2>
-              <p className="text-xs text-slate-500">Complete your assigned pillar tasks below</p>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg sm:text-xl font-black text-slate-900">Today's Growth Checklist</h2>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg border border-brand-200 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add Personal Habit
+                </button>
+              </div>
+              <p className="text-xs text-slate-500">Complete assigned pillar tasks and curated resources below</p>
             </div>
 
             {/* Pillar Filter Tabs */}
@@ -196,7 +274,7 @@ export default function ParticipantDashboard() {
 
           {isLoading ? (
             <div className="p-12 text-center text-slate-500 glass-panel rounded-2xl">
-              Loading today's tasks...
+              Loading today's assigned growth tasks...
             </div>
           ) : filteredTasks.length === 0 ? (
             <div className="p-12 text-center text-slate-500 glass-panel rounded-2xl space-y-2">
@@ -217,6 +295,82 @@ export default function ParticipantDashboard() {
           )}
         </div>
       </div>
+
+      {/* Add Personal Habit Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl relative border border-slate-200">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-900">Add Custom Personal Habit</h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="p-1 text-slate-400 hover:text-slate-700 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddPersonalTask} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Habit Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. 20-min Morning Walk"
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Category</label>
+                  <select
+                    value={newCategory}
+                    onChange={(e) => setNewCategory(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-brand-500 outline-none"
+                  >
+                    <option value="Personal">Personal</option>
+                    <option value="Fitness">Fitness</option>
+                    <option value="Reading">Reading</option>
+                    <option value="Journaling">Journaling</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Duration (mins)</label>
+                  <input
+                    type="number"
+                    min="5"
+                    max="180"
+                    value={newDuration}
+                    onChange={(e) => setNewDuration(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-brand-500 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isAdding}
+                  className="px-4 py-2 rounded-xl bg-brand-600 text-white text-xs font-bold hover:bg-brand-700 shadow-md"
+                >
+                  {isAdding ? 'Adding...' : 'Save Habit'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

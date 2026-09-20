@@ -2,13 +2,30 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { LayoutDashboard, CheckSquare, Calendar, Trophy, BookOpen, Settings, Shield, Users } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  LayoutDashboard,
+  CheckSquare,
+  Calendar,
+  Trophy,
+  BookOpen,
+  Settings,
+  Shield,
+  Users,
+  LogOut,
+  Sparkles,
+} from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 
 export const Sidebar: React.FC = () => {
   const pathname = usePathname();
-  const { user } = useAuthStore();
+  const router = useRouter();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   const participantLinks = [
     { href: '/dashboard', label: 'Today Growth', icon: LayoutDashboard },
@@ -21,9 +38,12 @@ export const Sidebar: React.FC = () => {
     { href: '/follow-up', label: 'Assigned Participants', icon: Users },
   ];
 
-  const isExco = user?.rolesList?.some((r: string) =>
-    ['LEADERSHIP', 'ADMIN', 'COMMUNITY_MANAGEMENT', 'FOLLOW_UP', 'PROGRAM_PLANNING', 'MEDIA', 'CONTENT'].includes(r)
-  ) || user?.role?.includes('ADMIN') || user?.role?.includes('LEADERSHIP');
+  const isExco =
+    user?.rolesList?.some((r: string) =>
+      ['LEADERSHIP', 'ADMIN', 'COMMUNITY_MANAGEMENT', 'FOLLOW_UP', 'PROGRAM_PLANNING', 'MEDIA', 'CONTENT'].includes(r)
+    ) ||
+    user?.role?.includes('ADMIN') ||
+    user?.role?.includes('LEADERSHIP');
 
   const adminLinks = [
     { href: '/admin', label: 'Overview Analytics', icon: Shield },
@@ -34,11 +54,42 @@ export const Sidebar: React.FC = () => {
   ];
 
   return (
-    <aside className="w-64 hidden lg:block bg-white/80 backdrop-blur-xl border-r border-slate-200/90 p-4 min-h-[calc(100vh-65px)] sticky top-[65px] shadow-subtle-sm">
+    <aside className="w-64 hidden lg:flex flex-col bg-white/95 backdrop-blur-xl border-r border-slate-200/90 p-4 min-h-screen sticky top-0 shadow-subtle-sm z-30 justify-between">
       <div className="space-y-6">
+        {/* Top App Brand */}
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+          <Link href="/dashboard" className="flex items-center gap-2.5 group">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white font-black text-sm shadow-md group-hover:scale-105 transition-transform">
+              YTT
+            </div>
+            <div>
+              <span className="font-black text-slate-900 tracking-tight text-sm block leading-none">
+                YOUR TIME TRADE
+              </span>
+              <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wider block mt-0.5">
+                90-Day Challenge
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        {/* User Info Card */}
+        {user && (
+          <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/70 space-y-1">
+            <div className="text-xs font-bold text-slate-900 truncate">{user.fullName}</div>
+            <div className="text-[10px] text-slate-500 truncate">{user.email}</div>
+            {user.role && (
+              <span className="inline-block mt-1 text-[9px] font-extrabold uppercase tracking-widest px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                {user.role.replace(/,/g, ' • ')}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Participant Section */}
         <div>
-          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2">
+          <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-3 mb-2 flex items-center gap-1">
+            <Sparkles className="w-3 h-3 text-brand-600" />
             Participant Portal
           </h4>
           <nav className="space-y-1">
@@ -49,7 +100,7 @@ export const Sidebar: React.FC = () => {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                     isActive
                       ? 'bg-brand-50 text-brand-600 border border-brand-200/80 shadow-subtle-sm'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
@@ -77,7 +128,7 @@ export const Sidebar: React.FC = () => {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                       isActive
                         ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
@@ -106,7 +157,7 @@ export const Sidebar: React.FC = () => {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all ${
                       isActive
                         ? 'bg-blue-50 text-blue-700 border border-blue-200'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
@@ -120,6 +171,19 @@ export const Sidebar: React.FC = () => {
             </nav>
           </div>
         )}
+      </div>
+
+      {/* Logout Action at Bottom */}
+      <div className="pt-4 border-t border-slate-100">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-slate-600 hover:text-red-600 hover:bg-red-50 transition-colors"
+        >
+          <span className="flex items-center gap-2">
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </span>
+        </button>
       </div>
     </aside>
   );
