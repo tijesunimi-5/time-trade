@@ -76,6 +76,10 @@ export const api = {
   approveTestimonial: (id: string) => fetcher(`/admin/testimonials/${id}/approve`, { method: 'PUT' }),
   getDynamicFormFields: () => fetcher('/admin/forms/fields'),
   createDynamicFormField: (field: any) => fetcher('/admin/forms/fields', { method: 'POST', body: JSON.stringify(field) }),
+  updateDynamicFormField: (id: string, field: any) => fetcher(`/admin/forms/fields/${id}`, { method: 'PUT', body: JSON.stringify(field) }),
+  deleteDynamicFormField: (id: string) => fetcher(`/admin/forms/fields/${id}`, { method: 'DELETE' }),
+  reorderDynamicFormFields: (fieldOrders: { id: string; displayOrder: number }[]) =>
+    fetcher('/admin/forms/fields/reorder', { method: 'PUT', body: JSON.stringify({ fieldOrders }) }),
   updateSettings: (settings: { isAdminRegistrationActive: boolean }) =>
     fetcher('/admin/settings', { method: 'PUT', body: JSON.stringify(settings) }),
 };

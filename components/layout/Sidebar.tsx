@@ -21,8 +21,14 @@ export const Sidebar: React.FC = () => {
     { href: '/follow-up', label: 'Assigned Participants', icon: Users },
   ];
 
+  const isExco = user?.rolesList?.some((r: string) =>
+    ['LEADERSHIP', 'ADMIN', 'COMMUNITY_MANAGEMENT', 'FOLLOW_UP', 'PROGRAM_PLANNING', 'MEDIA', 'CONTENT'].includes(r)
+  ) || user?.role?.includes('ADMIN') || user?.role?.includes('LEADERSHIP');
+
   const adminLinks = [
     { href: '/admin', label: 'Overview Analytics', icon: Shield },
+    { href: '/admin/participants', label: 'Participant Answers', icon: Users },
+    { href: '/admin/forms', label: 'Question Builder', icon: Settings },
     { href: '/admin/tasks', label: 'Task Engine Manager', icon: CheckSquare },
     { href: '/admin/settings', label: 'EXCO System Settings', icon: Settings },
   ];
@@ -58,7 +64,7 @@ export const Sidebar: React.FC = () => {
         </div>
 
         {/* Follow-up Section */}
-        {(user?.role?.includes('FOLLOW_UP') || user?.role?.includes('ADMIN')) && (
+        {(user?.role?.includes('FOLLOW_UP') || user?.role?.includes('ADMIN') || user?.role?.includes('LEADERSHIP')) && (
           <div>
             <h4 className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest px-3 mb-2">
               Follow-Up System
@@ -86,10 +92,10 @@ export const Sidebar: React.FC = () => {
           </div>
         )}
 
-        {/* Admin Section */}
-        {user?.role?.includes('ADMIN') && (
+        {/* Admin & EXCO Section */}
+        {isExco && (
           <div>
-            <h4 className="text-[10px] font-bold text-amber-600 uppercase tracking-widest px-3 mb-2">
+            <h4 className="text-[10px] font-bold text-blue-600 uppercase tracking-widest px-3 mb-2">
               Admin & EXCO Portal
             </h4>
             <nav className="space-y-1">
@@ -102,11 +108,11 @@ export const Sidebar: React.FC = () => {
                     href={item.href}
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                       isActive
-                        ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                        ? 'bg-blue-50 text-blue-700 border border-blue-200'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
                     }`}
                   >
-                    <Icon className="w-4 h-4 text-amber-600" />
+                    <Icon className="w-4 h-4 text-blue-600" />
                     {item.label}
                   </Link>
                 );

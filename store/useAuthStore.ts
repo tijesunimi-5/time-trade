@@ -4,7 +4,8 @@ export interface User {
   id: string;
   email: string;
   fullName: string;
-  role: 'PARTICIPANT' | 'FOLLOW_UP' | 'ADMIN';
+  role: string;
+  rolesList?: string[];
   avatarUrl?: string;
   phone?: string;
   profile?: any;

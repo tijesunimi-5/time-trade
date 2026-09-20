@@ -18,7 +18,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-600 selection:text-white">
       {/* Sticky Navigation Bar */}
-      <Navbar />
+      {/* <Navbar /> */}
 
       {/* Main Content Sections */}
       <main>
