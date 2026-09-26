@@ -50,10 +50,18 @@ interface FormSet {
 
 export default function AdminFormsBuilderPage() {
   const user = useAuthStore((state) => state.user);
-  const userRoles = user?.rolesList || (user?.role ? user.role.split(',') : []);
+  const initAuth = useAuthStore((state) => state.initAuth);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    initAuth();
+    setMounted(true);
+  }, [initAuth]);
+
+  const userRoles = mounted ? (user?.rolesList || (user?.role ? user.role.split(',') : [])) : [];
 
   // Can edit if Leadership, Admin, Community Management, or Follow-Up
-  const canEdit = userRoles.some((r: string) =>
+  const canEdit = mounted && userRoles.some((r: string) =>
     ['LEADERSHIP', 'ADMIN', 'COMMUNITY_MANAGEMENT', 'FOLLOW_UP'].includes(r.trim())
   );
 
