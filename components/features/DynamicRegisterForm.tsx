@@ -1,10 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { api } from '../../services/api';
+import React from 'react';
 import { Input } from '../ui/Input';
 
-interface DynamicField {
+export interface DynamicField {
   id: string;
   fieldName: string;
   label: string;
@@ -16,27 +15,13 @@ interface DynamicField {
 }
 
 interface DynamicRegisterFormProps {
+  fields: DynamicField[];
   formData: Record<string, any>;
   onChange: (fieldName: string, value: any) => void;
 }
 
-export const DynamicRegisterForm: React.FC<DynamicRegisterFormProps> = ({ formData, onChange }) => {
-  const [fields, setFields] = useState<DynamicField[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    api.getDynamicFormFields()
-      .then((res) => {
-        if (res.fields) {
-          const activeFields = res.fields.filter((f: DynamicField) => f.isActive);
-          setFields(activeFields);
-        }
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setIsLoading(false));
-  }, []);
-
-  if (isLoading || fields.length === 0) return null;
+export const DynamicRegisterForm: React.FC<DynamicRegisterFormProps> = ({ fields, formData, onChange }) => {
+  if (!fields || fields.length === 0) return null;
 
   const handleCheckboxToggle = (fieldName: string, option: string) => {
     const currentList: string[] = Array.isArray(formData[fieldName]) ? formData[fieldName] : [];
