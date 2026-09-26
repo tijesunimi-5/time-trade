@@ -370,7 +370,11 @@ export default function AdminTasksPage() {
                             {week.days?.map((day: any) => (
                               <div key={day.id} className="p-3 bg-white rounded-lg border border-slate-200 text-xs space-y-2">
                                 <div className="flex items-center justify-between font-bold text-slate-900">
-                                  <span>Day {day.dayNumber}: {day.title || `Day ${day.dayNumber}`}</span>
+                                  <span>
+                                    {day.title && day.title.startsWith(`Day ${day.dayNumber}`)
+                                      ? day.title
+                                      : `Day ${day.dayNumber}${day.title ? `: ${day.title}` : ''}`}
+                                  </span>
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-[10px] font-semibold text-slate-500 mr-1">
                                       {day.tasks?.length || 0} Tasks
