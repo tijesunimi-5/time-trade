@@ -93,6 +93,12 @@ export const api = {
 
   // Admin CMS & Templates
   getAdminProgrammeTree: () => fetcher('/programme/admin/tree'),
+  savePhase: (phase: any) => fetcher('/programme/admin/phase', { method: 'POST', body: JSON.stringify(phase) }),
+  deletePhase: (id: string) => fetcher(`/programme/admin/phase/${id}`, { method: 'DELETE' }),
+  saveWeek: (week: any) => fetcher('/programme/admin/week', { method: 'POST', body: JSON.stringify(week) }),
+  deleteWeek: (id: string) => fetcher(`/programme/admin/week/${id}`, { method: 'DELETE' }),
+  saveDay: (day: any) => fetcher('/programme/admin/day', { method: 'POST', body: JSON.stringify(day) }),
+  deleteDay: (id: string) => fetcher(`/programme/admin/day/${id}`, { method: 'DELETE' }),
   saveTaskTemplate: (template: any) => fetcher('/programme/admin/template', { method: 'POST', body: JSON.stringify(template) }),
   deleteTaskTemplate: (id: string) => fetcher(`/programme/admin/template/${id}`, { method: 'DELETE' }),
   saveResource: (resource: any) => fetcher('/programme/admin/resource', { method: 'POST', body: JSON.stringify(resource) }),

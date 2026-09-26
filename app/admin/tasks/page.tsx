@@ -9,7 +9,7 @@ import { Input } from '../../../components/ui/Input';
 import { api } from '../../../services/api';
 import { Loader } from '../../../components/ui/Loader';
 import { toast } from '../../../store/useToastStore';
-import { Plus, Trash2, Pencil, BookOpen, Layers, CheckSquare, FolderPlus, ArrowRight } from 'lucide-react';
+import { Plus, Trash2, Pencil, BookOpen, Layers, CheckSquare, FolderPlus, ArrowRight, Calendar } from 'lucide-react';
 
 export default function AdminTasksPage() {
   const [activeTab, setActiveTab] = useState<'TREE' | 'TEMPLATES' | 'RESOURCES'>('TREE');
@@ -17,14 +17,38 @@ export default function AdminTasksPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Modal Visibility States
+  const [showPhaseModal, setShowPhaseModal] = useState(false);
+  const [showWeekModal, setShowWeekModal] = useState(false);
+  const [showDayModal, setShowDayModal] = useState(false);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showResourceModal, setShowResourceModal] = useState(false);
 
   // Editing Entity IDs (null if creating new)
+  const [editingPhaseId, setEditingPhaseId] = useState<string | null>(null);
+  const [editingWeekId, setEditingWeekId] = useState<string | null>(null);
+  const [editingDayId, setEditingDayId] = useState<string | null>(null);
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [editingResourceId, setEditingResourceId] = useState<string | null>(null);
+
+  // Phase Form State
+  const [phaseTitle, setPhaseTitle] = useState('');
+  const [phaseNumber, setPhaseNumber] = useState(1);
+  const [phaseDuration, setPhaseDuration] = useState(30);
+  const [phaseObjective, setPhaseObjective] = useState('');
+
+  // Week Form State
+  const [selectedPhaseId, setSelectedPhaseId] = useState('');
+  const [weekNumber, setWeekNumber] = useState(1);
+  const [weekTheme, setWeekTheme] = useState('');
+  const [weekAnchorResource, setWeekAnchorResource] = useState('');
+
+  // Day Form State
+  const [selectedWeekId, setSelectedWeekId] = useState('');
+  const [dayNumber, setDayNumber] = useState(1);
+  const [dayTitle, setDayTitle] = useState('');
+  const [dayFocus, setDayFocus] = useState('');
 
   // Task Form State
   const [selectedDayId, setSelectedDayId] = useState('');
@@ -66,6 +90,162 @@ export default function AdminTasksPage() {
   useEffect(() => {
     loadAdminTree();
   }, []);
+
+  // --- PHASE HANDLERS ---
+  const handleOpenCreatePhase = () => {
+    setEditingPhaseId(null);
+    const existingPhases = treeData?.programme?.phases || [];
+    setPhaseTitle(`Phase ${existingPhases.length + 1}`);
+    setPhaseNumber(existingPhases.length + 1);
+    setPhaseDuration(30);
+    setPhaseObjective('');
+    setShowPhaseModal(true);
+  };
+
+  const handleOpenEditPhase = (phase: any) => {
+    setEditingPhaseId(phase.id);
+    setPhaseTitle(phase.title || '');
+    setPhaseNumber(phase.phaseNumber || 1);
+    setPhaseDuration(phase.durationDays || 30);
+    setPhaseObjective(phase.objective || '');
+    setShowPhaseModal(true);
+  };
+
+  const handleSavePhase = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.savePhase({
+        id: editingPhaseId || undefined,
+        title: phaseTitle,
+        phaseNumber,
+        durationDays: phaseDuration,
+        objective: phaseObjective || undefined,
+      });
+      setShowPhaseModal(false);
+      toast.success(editingPhaseId ? 'Phase Updated' : 'Phase Created', `"${phaseTitle}" saved successfully.`);
+      loadAdminTree();
+    } catch (err: any) {
+      toast.error('Phase Action Failed', err.message || 'Unable to save phase');
+    }
+  };
+
+  const handleDeletePhase = async (phaseId: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to delete Phase "${title}" and all its weeks, days, and tasks?`)) return;
+    try {
+      await api.deletePhase(phaseId);
+      toast.success('Phase Deleted', `"${title}" has been removed.`);
+      loadAdminTree();
+    } catch (err: any) {
+      toast.error('Delete Failed', err.message || 'Unable to delete phase');
+    }
+  };
+
+  // --- WEEK HANDLERS ---
+  const handleOpenCreateWeek = (phaseId?: string) => {
+    setEditingWeekId(null);
+    setSelectedPhaseId(phaseId || treeData?.programme?.phases?.[0]?.id || '');
+    const totalWeeks = treeData?.programme?.phases?.reduce((acc: number, p: any) => acc + (p.weeks?.length || 0), 0) || 0;
+    setWeekNumber(totalWeeks + 1);
+    setWeekTheme('');
+    setWeekAnchorResource('');
+    setShowWeekModal(true);
+  };
+
+  const handleOpenEditWeek = (week: any) => {
+    setEditingWeekId(week.id);
+    setSelectedPhaseId(week.phaseId);
+    setWeekNumber(week.weekNumber || 1);
+    setWeekTheme(week.theme || '');
+    setWeekAnchorResource(week.anchorResource || '');
+    setShowWeekModal(true);
+  };
+
+  const handleSaveWeek = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.saveWeek({
+        id: editingWeekId || undefined,
+        phaseId: selectedPhaseId,
+        weekNumber,
+        theme: weekTheme,
+        anchorResource: weekAnchorResource || undefined,
+      });
+      setShowWeekModal(false);
+      toast.success(editingWeekId ? 'Week Updated' : 'Week Created', `"${weekTheme}" saved successfully.`);
+      loadAdminTree();
+    } catch (err: any) {
+      toast.error('Week Action Failed', err.message || 'Unable to save week');
+    }
+  };
+
+  const handleDeleteWeek = async (weekId: string, theme: string) => {
+    if (!window.confirm(`Are you sure you want to delete Week "${theme}" and all its days?`)) return;
+    try {
+      await api.deleteWeek(weekId);
+      toast.success('Week Deleted', `"${theme}" has been removed.`);
+      loadAdminTree();
+    } catch (err: any) {
+      toast.error('Delete Failed', err.message || 'Unable to delete week');
+    }
+  };
+
+  // --- DAY HANDLERS ---
+  const handleOpenCreateDay = (weekId?: string) => {
+    setEditingDayId(null);
+    setSelectedWeekId(weekId || '');
+    let nextDayNum = 1;
+    if (weekId) {
+      const foundWeek = treeData?.programme?.phases?.flatMap((p: any) => p.weeks || []).find((w: any) => w.id === weekId);
+      if (foundWeek && foundWeek.days?.length > 0) {
+        const maxDay = Math.max(...foundWeek.days.map((d: any) => d.dayNumber));
+        nextDayNum = maxDay + 1;
+      } else if (foundWeek) {
+        nextDayNum = (foundWeek.weekNumber - 1) * 7 + 1;
+      }
+    }
+    setDayNumber(nextDayNum);
+    setDayTitle(`Day ${nextDayNum}`);
+    setDayFocus('');
+    setShowDayModal(true);
+  };
+
+  const handleOpenEditDay = (day: any) => {
+    setEditingDayId(day.id);
+    setSelectedWeekId(day.weekId);
+    setDayNumber(day.dayNumber || 1);
+    setDayTitle(day.title || `Day ${day.dayNumber}`);
+    setDayFocus(day.focus || '');
+    setShowDayModal(true);
+  };
+
+  const handleSaveDay = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.saveDay({
+        id: editingDayId || undefined,
+        weekId: selectedWeekId,
+        dayNumber,
+        title: dayTitle,
+        focus: dayFocus || undefined,
+      });
+      setShowDayModal(false);
+      toast.success(editingDayId ? 'Day Updated' : 'Day Created', `"${dayTitle}" saved successfully.`);
+      loadAdminTree();
+    } catch (err: any) {
+      toast.error('Day Action Failed', err.message || 'Unable to save day');
+    }
+  };
+
+  const handleDeleteDay = async (dayId: string, title: string) => {
+    if (!window.confirm(`Are you sure you want to delete "${title}"?`)) return;
+    try {
+      await api.deleteDay(dayId);
+      toast.success('Day Deleted', `"${title}" has been removed.`);
+      loadAdminTree();
+    } catch (err: any) {
+      toast.error('Delete Failed', err.message || 'Unable to delete day');
+    }
+  };
 
   // --- TASK HANDLERS ---
   const handleOpenCreateTask = (dayId?: string) => {
@@ -261,6 +441,8 @@ export default function AdminTasksPage() {
     }
   };
 
+  const phasesList = treeData?.programme?.phases || [];
+
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
       <Sidebar />
@@ -273,11 +455,19 @@ export default function AdminTasksPage() {
               Programme & Task CMS Manager
             </h1>
             <p className="text-xs text-slate-500">
-              Curate and edit 90-day task schedules, reading resources, timestamps, and task templates
+              Build and edit custom phases, weekly themes, days, activities, and task schedules dynamically.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={handleOpenCreatePhase}
+              className="flex items-center gap-1.5"
+            >
+              <Layers className="w-3.5 h-3.5 text-brand-600" /> Add Phase
+            </Button>
             <Button
               variant="secondary"
               size="sm"
@@ -300,7 +490,7 @@ export default function AdminTasksPage() {
               onClick={() => handleOpenCreateTask()}
               className="flex items-center gap-1.5"
             >
-              <Plus className="w-3.5 h-3.5" /> Assign Task to Day
+              <Plus className="w-3.5 h-3.5" /> Assign Task
             </Button>
           </div>
         </div>
@@ -308,7 +498,7 @@ export default function AdminTasksPage() {
         {/* CMS Navigation Tabs */}
         <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
           {[
-            { id: 'TREE', label: '90-Day Hierarchy Tree', icon: Layers },
+            { id: 'TREE', label: 'Programme Hierarchy Tree', icon: Layers },
             { id: 'TEMPLATES', label: 'Reusable Templates', icon: CheckSquare },
             { id: 'RESOURCES', label: 'Resource Catalog', icon: BookOpen },
           ].map((tab) => {
@@ -340,102 +530,212 @@ export default function AdminTasksPage() {
             {/* TREE TAB */}
             {activeTab === 'TREE' && (
               <div className="space-y-6">
-                {treeData?.programme?.phases?.map((phase: any) => (
-                  <div key={phase.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle-sm space-y-4">
-                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                      <div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-brand-600">
-                          PHASE {phase.phaseNumber}
-                        </span>
-                        <h2 className="text-lg font-black text-slate-900">{phase.title} ({phase.durationDays} Days)</h2>
-                      </div>
-                      <Badge variant="cyan">{phase.weeks?.length || 0} Weeks Configured</Badge>
+                {phasesList.length === 0 ? (
+                  <div className="p-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200 space-y-4">
+                    <div className="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mx-auto">
+                      <Layers className="w-6 h-6" />
                     </div>
+                    <div className="max-w-md mx-auto space-y-1">
+                      <h3 className="text-base font-bold text-slate-900">No Programme Phases Configured</h3>
+                      <p className="text-xs text-slate-500">
+                        The task builder is completely empty. Start by adding your first Phase (e.g., Phase 1: RESET, 30 Days) to curate custom weeks, days, and activities.
+                      </p>
+                    </div>
+                    <Button variant="primary" size="sm" onClick={handleOpenCreatePhase}>
+                      <Plus className="w-4 h-4 mr-1.5" /> Create First Phase
+                    </Button>
+                  </div>
+                ) : (
+                  phasesList.map((phase: any) => (
+                    <div key={phase.id} className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle-sm space-y-4">
+                      {/* Phase Header */}
+                      <div className="flex flex-wrap items-center justify-between border-b border-slate-100 pb-3 gap-2">
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] font-black uppercase tracking-widest text-brand-600">
+                            PHASE {phase.phaseNumber}
+                          </span>
+                          <h2 className="text-lg font-black text-slate-900">{phase.title} ({phase.durationDays} Days)</h2>
+                          {phase.objective && (
+                            <p className="text-xs text-slate-500">{phase.objective}</p>
+                          )}
+                        </div>
 
-                    <div className="space-y-3">
-                      {phase.weeks?.map((week: any) => (
-                        <div key={week.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2">
-                          <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-slate-900">
-                              Week {week.weekNumber}: {week.theme}
-                            </h3>
-                            {week.anchorResource && (
-                              <span className="text-[11px] font-semibold text-cyan-800 bg-cyan-50 px-2.5 py-0.5 rounded border border-cyan-200">
-                                Anchor: {week.anchorResource}
-                              </span>
-                            )}
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="cyan">{phase.weeks?.length || 0} Weeks Configured</Badge>
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleOpenCreateWeek(phase.id)}
+                            className="flex items-center gap-1"
+                          >
+                            <Plus className="w-3 h-3" /> Add Week
+                          </Button>
+                          <button
+                            onClick={() => handleOpenEditPhase(phase)}
+                            title="Edit Phase"
+                            className="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePhase(phase.id, phase.title)}
+                            title="Delete Phase"
+                            className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
 
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5 pt-2">
-                            {week.days?.map((day: any) => (
-                              <div key={day.id} className="p-3 bg-white rounded-lg border border-slate-200 text-xs space-y-2">
-                                <div className="flex items-center justify-between font-bold text-slate-900">
-                                  <span>
-                                    {day.title && day.title.startsWith(`Day ${day.dayNumber}`)
-                                      ? day.title
-                                      : `Day ${day.dayNumber}${day.title ? `: ${day.title}` : ''}`}
-                                  </span>
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-[10px] font-semibold text-slate-500 mr-1">
-                                      {day.tasks?.length || 0} Tasks
+                      {/* Weeks List */}
+                      {phase.weeks?.length === 0 ? (
+                        <div className="p-6 text-center bg-slate-50/50 rounded-xl border border-dashed border-slate-200 space-y-2">
+                          <p className="text-xs text-slate-500">No weeks configured for {phase.title} yet.</p>
+                          <Button variant="secondary" size="sm" onClick={() => handleOpenCreateWeek(phase.id)}>
+                            <Plus className="w-3.5 h-3.5 mr-1" /> Add Week to {phase.title}
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {phase.weeks?.map((week: any) => (
+                            <div key={week.id} className="p-4 bg-slate-50 rounded-xl border border-slate-200/80 space-y-3">
+                              {/* Week Header */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <h3 className="text-sm font-bold text-slate-900">
+                                    Week {week.weekNumber}: {week.theme}
+                                  </h3>
+                                  {week.anchorResource && (
+                                    <span className="text-[11px] font-semibold text-cyan-800 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                                      Anchor: {week.anchorResource}
                                     </span>
-                                    <button
-                                      onClick={() => handleOpenCreateTask(day.id)}
-                                      title="Add Task to this Day"
-                                      className="text-brand-600 hover:bg-brand-50 p-1 rounded transition-colors"
-                                    >
-                                      <Plus className="w-3.5 h-3.5" />
-                                    </button>
-                                  </div>
+                                  )}
                                 </div>
 
-                                {day.tasks?.length === 0 ? (
-                                  <p className="text-[11px] text-slate-400 italic">No day-specific tasks assigned</p>
-                                ) : (
-                                  <div className="space-y-1">
-                                    {day.tasks?.map((t: any) => (
-                                      <div
-                                        key={t.id}
-                                        className="group text-[11px] text-slate-700 flex items-center justify-between bg-slate-50 hover:bg-slate-100 p-2 rounded border border-slate-200 transition-colors"
-                                      >
-                                        <div className="flex items-center gap-2 truncate pr-2">
-                                          <Badge variant={t.pillar?.toLowerCase() as any}>{t.pillar}</Badge>
-                                          <span className="font-medium truncate">{t.title}</span>
-                                          {t.isNonNegotiable && (
-                                            <span className="text-[9px] font-extrabold uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
-                                              Non-Neg
-                                            </span>
-                                          )}
+                                <div className="flex items-center gap-1.5">
+                                  <button
+                                    onClick={() => handleOpenCreateDay(week.id)}
+                                    className="text-xs font-semibold text-brand-600 hover:bg-brand-50 px-2 py-1 rounded transition-colors flex items-center gap-1"
+                                  >
+                                    <Plus className="w-3 h-3" /> Add Day
+                                  </button>
+                                  <button
+                                    onClick={() => handleOpenEditWeek(week)}
+                                    title="Edit Week"
+                                    className="p-1 text-slate-500 hover:text-brand-600 hover:bg-white rounded transition-colors"
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleDeleteWeek(week.id, week.theme)}
+                                    title="Delete Week"
+                                    className="p-1 text-slate-500 hover:text-red-600 hover:bg-white rounded transition-colors"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              </div>
+
+                              {/* Days List */}
+                              {week.days?.length === 0 ? (
+                                <div className="p-3 text-center bg-white rounded-lg border border-dashed border-slate-200">
+                                  <span className="text-xs text-slate-400">No days configured in this week yet.</span>
+                                </div>
+                              ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+                                  {week.days?.map((day: any) => (
+                                    <div key={day.id} className="p-3 bg-white rounded-lg border border-slate-200 text-xs space-y-2">
+                                      <div className="flex items-center justify-between font-bold text-slate-900">
+                                        <div className="flex items-center gap-1.5 truncate">
+                                          <span>
+                                            {day.title && day.title.startsWith(`Day ${day.dayNumber}`)
+                                              ? day.title
+                                              : `Day ${day.dayNumber}${day.title ? `: ${day.title}` : ''}`}
+                                          </span>
                                         </div>
 
-                                        <div className="flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex items-center gap-1">
+                                          <span className="text-[10px] font-semibold text-slate-500 mr-1">
+                                            {day.tasks?.length || 0} Tasks
+                                          </span>
                                           <button
-                                            onClick={() => handleOpenEditTask(t)}
-                                            title="Edit Task"
-                                            className="p-1 text-slate-500 hover:text-brand-600 hover:bg-white rounded transition-colors"
+                                            onClick={() => handleOpenCreateTask(day.id)}
+                                            title="Add Task to Day"
+                                            className="text-brand-600 hover:bg-brand-50 p-1 rounded transition-colors"
+                                          >
+                                            <Plus className="w-3.5 h-3.5" />
+                                          </button>
+                                          <button
+                                            onClick={() => handleOpenEditDay(day)}
+                                            title="Edit Day"
+                                            className="text-slate-400 hover:text-brand-600 p-1 rounded transition-colors"
                                           >
                                             <Pencil className="w-3 h-3" />
                                           </button>
                                           <button
-                                            onClick={() => handleDeleteTask(t.id, t.title)}
-                                            title="Delete Task"
-                                            className="p-1 text-slate-500 hover:text-red-600 hover:bg-white rounded transition-colors"
+                                            onClick={() => handleDeleteDay(day.id, day.title || `Day ${day.dayNumber}`)}
+                                            title="Delete Day"
+                                            className="text-slate-400 hover:text-red-600 p-1 rounded transition-colors"
                                           >
                                             <Trash2 className="w-3 h-3" />
                                           </button>
                                         </div>
                                       </div>
-                                    ))}
-                                  </div>
-                                )}
-                              </div>
-                            ))}
-                          </div>
+
+                                      {day.focus && (
+                                        <p className="text-[11px] text-slate-500 italic">{day.focus}</p>
+                                      )}
+
+                                      {day.tasks?.length === 0 ? (
+                                        <p className="text-[11px] text-slate-400 italic">No day-specific tasks assigned</p>
+                                      ) : (
+                                        <div className="space-y-1">
+                                          {day.tasks?.map((t: any) => (
+                                            <div
+                                              key={t.id}
+                                              className="group text-[11px] text-slate-700 flex items-center justify-between bg-slate-50 hover:bg-slate-100 p-2 rounded border border-slate-200 transition-colors"
+                                            >
+                                              <div className="flex items-center gap-2 truncate pr-2">
+                                                <Badge variant={t.pillar?.toLowerCase() as any}>{t.pillar}</Badge>
+                                                <span className="font-medium truncate">{t.title}</span>
+                                                {t.isNonNegotiable && (
+                                                  <span className="text-[9px] font-extrabold uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+                                                    Non-Neg
+                                                  </span>
+                                                )}
+                                              </div>
+
+                                              <div className="flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                  onClick={() => handleOpenEditTask(t)}
+                                                  title="Edit Task"
+                                                  className="p-1 text-slate-500 hover:text-brand-600 hover:bg-white rounded transition-colors"
+                                                >
+                                                  <Pencil className="w-3 h-3" />
+                                                </button>
+                                                <button
+                                                  onClick={() => handleDeleteTask(t.id, t.title)}
+                                                  title="Delete Task"
+                                                  className="p-1 text-slate-500 hover:text-red-600 hover:bg-white rounded transition-colors"
+                                                >
+                                                  <Trash2 className="w-3 h-3" />
+                                                </button>
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             )}
 
@@ -534,6 +834,189 @@ export default function AdminTasksPage() {
         )}
       </div>
 
+      {/* Phase Modal (Create & Edit) */}
+      {showPhaseModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <Card variant="glass" className="max-w-md w-full p-6 space-y-4 bg-white">
+            <h3 className="text-lg font-bold text-slate-900">
+              {editingPhaseId ? 'Edit Programme Phase' : 'Create Programme Phase'}
+            </h3>
+            <form onSubmit={handleSavePhase} className="space-y-3">
+              <Input
+                label="Phase Title"
+                required
+                value={phaseTitle}
+                onChange={(e) => setPhaseTitle(e.target.value)}
+                placeholder="e.g. RESET, RESTART, REFOCUS, or Custom Phase"
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Phase Order / Number"
+                  type="number"
+                  required
+                  value={phaseNumber}
+                  onChange={(e) => setPhaseNumber(parseInt(e.target.value, 10) || 1)}
+                />
+                <Input
+                  label="Duration (Days)"
+                  type="number"
+                  required
+                  value={phaseDuration}
+                  onChange={(e) => setPhaseDuration(parseInt(e.target.value, 10) || 30)}
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">Objective / Theme</label>
+                <textarea
+                  rows={2}
+                  value={phaseObjective}
+                  onChange={(e) => setPhaseObjective(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:ring-2 focus:ring-brand-500"
+                  placeholder="Phase goals or key focus areas..."
+                />
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="glass" size="sm" onClick={() => setShowPhaseModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" size="sm">
+                  {editingPhaseId ? 'Save Changes' : 'Create Phase'}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* Week Modal (Create & Edit) */}
+      {showWeekModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <Card variant="glass" className="max-w-md w-full p-6 space-y-4 bg-white">
+            <h3 className="text-lg font-bold text-slate-900">
+              {editingWeekId ? 'Edit Programme Week' : 'Create Programme Week'}
+            </h3>
+            <form onSubmit={handleSaveWeek} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Select Phase</label>
+                <select
+                  value={selectedPhaseId}
+                  onChange={(e) => setSelectedPhaseId(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-brand-500 outline-none"
+                >
+                  <option value="">Select Target Phase...</option>
+                  {phasesList.map((p: any) => (
+                    <option key={p.id} value={p.id}>
+                      Phase {p.phaseNumber}: {p.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Week Number"
+                  type="number"
+                  required
+                  value={weekNumber}
+                  onChange={(e) => setWeekNumber(parseInt(e.target.value, 10) || 1)}
+                />
+                <Input
+                  label="Anchor Resource (Optional)"
+                  placeholder="e.g. Mindset by Carol Dweck"
+                  value={weekAnchorResource}
+                  onChange={(e) => setWeekAnchorResource(e.target.value)}
+                />
+              </div>
+
+              <Input
+                label="Week Theme"
+                required
+                value={weekTheme}
+                onChange={(e) => setWeekTheme(e.target.value)}
+                placeholder="e.g. Reset Your Mindset"
+              />
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="glass" size="sm" onClick={() => setShowWeekModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" size="sm">
+                  {editingWeekId ? 'Save Changes' : 'Create Week'}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* Day Modal (Create & Edit) */}
+      {showDayModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <Card variant="glass" className="max-w-md w-full p-6 space-y-4 bg-white">
+            <h3 className="text-lg font-bold text-slate-900">
+              {editingDayId ? 'Edit Programme Day' : 'Create Programme Day'}
+            </h3>
+            <form onSubmit={handleSaveDay} className="space-y-3">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Select Week</label>
+                <select
+                  value={selectedWeekId}
+                  onChange={(e) => setSelectedWeekId(e.target.value)}
+                  required
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none focus:ring-2 focus:ring-brand-500"
+                >
+                  <option value="">Select Target Week...</option>
+                  {phasesList.flatMap((p: any) =>
+                    p.weeks?.map((w: any) => (
+                      <option key={w.id} value={w.id}>
+                        [Phase {p.phaseNumber}] Week {w.weekNumber}: {w.theme}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+
+              <Input
+                label="Day Number (e.g. 1 to 90)"
+                type="number"
+                required
+                value={dayNumber}
+                onChange={(e) => setDayNumber(parseInt(e.target.value, 10) || 1)}
+              />
+
+              <Input
+                label="Day Title"
+                required
+                value={dayTitle}
+                onChange={(e) => setDayTitle(e.target.value)}
+                placeholder="e.g. Day 1: Pausing Friction"
+              />
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 block">Daily Focus / Objective</label>
+                <textarea
+                  rows={2}
+                  value={dayFocus}
+                  onChange={(e) => setDayFocus(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs outline-none focus:ring-2 focus:ring-brand-500"
+                  placeholder="Focus note for participants..."
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="glass" size="sm" onClick={() => setShowDayModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" size="sm">
+                  {editingDayId ? 'Save Changes' : 'Create Day'}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+
       {/* Task Modal (Create & Edit) */}
       {showTaskModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
@@ -543,14 +1026,14 @@ export default function AdminTasksPage() {
             </h3>
             <form onSubmit={handleSaveTask} className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Select Day (1–90)</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Select Target Day</label>
                 <select
                   value={selectedDayId}
                   onChange={(e) => setSelectedDayId(e.target.value)}
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-brand-500 outline-none"
                 >
-                  <option value="">Standard Non-Negotiable (All Days)</option>
-                  {treeData?.programme?.phases?.flatMap((p: any) =>
+                  <option value="">Standard Non-Negotiable (Applies Every Day)</option>
+                  {phasesList.flatMap((p: any) =>
                     p.weeks?.flatMap((w: any) =>
                       w.days?.map((d: any) => (
                         <option key={d.id} value={d.id}>
