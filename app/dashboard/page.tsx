@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Sidebar } from '../../components/layout/Sidebar';
 import { Card } from '../../components/ui/Card';
 import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { TaskCard, Task } from '../../components/features/TaskCard';
 import { WhatsAppCommunityBanner } from '../../components/features/WhatsAppCommunityBanner';
@@ -30,6 +31,10 @@ export default function ParticipantDashboard() {
   const [newDuration, setNewDuration] = useState('30');
   const [isAdding, setIsAdding] = useState(false);
 
+  // Journal Reflection State
+  const [journalNote, setJournalNote] = useState('');
+  const [isSavingNote, setIsSavingNote] = useState(false);
+
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
@@ -44,11 +49,31 @@ export default function ParticipantDashboard() {
       if (dayRes?.tasks) {
         setTasks(dayRes.tasks);
       }
+      if (dayRes?.journalNote) {
+        setJournalNote(dayRes.journalNote);
+      }
       setProgress(progressRes);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveJournalNote = async () => {
+    try {
+      setIsSavingNote(true);
+      const targetDate = dayData?.targetDate || new Date().toISOString().split('T')[0];
+      await api.saveJournalNote({
+        noteDate: targetDate,
+        dayNumber: dayData?.dayNumber || 1,
+        content: journalNote,
+      });
+      toast.success('Reflection Saved', 'Your daily thought note has been saved successfully.');
+    } catch (err: any) {
+      toast.error('Save Failed', err.message || 'Unable to save journal note');
+    } finally {
+      setIsSavingNote(false);
     }
   };
 
@@ -119,47 +144,59 @@ export default function ParticipantDashboard() {
 
       <div className="flex-1 w-full p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-6xl mx-auto">
         {/* Header Day & Phase Banner */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-5 sm:p-6 rounded-2xl border-slate-200 shadow-subtle-sm relative overflow-hidden">
-          <div className="space-y-1.5 z-10">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="cyan">DAY {currentDayNum} / 90</Badge>
-              {programmeInfo?.currentPhaseTitle ? (
-                <span className="text-[10px] sm:text-xs font-black text-brand-700 uppercase tracking-widest bg-brand-50 px-2.5 py-0.5 rounded border border-brand-200">
-                  PHASE {programmeInfo.currentPhaseNumber || 1}: {programmeInfo.currentPhaseTitle}
-                </span>
-              ) : (
-                <span className="text-[10px] sm:text-xs font-black text-slate-500 uppercase tracking-widest bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
-                  PHASE: UNCONFIGURED
-                </span>
-              )}
-              {programmeInfo?.currentWeekTheme && (
-                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">
-                  WEEK {programmeInfo.currentWeekNumber || 1}: {programmeInfo.currentWeekTheme}
-                </span>
-              )}
+        {!programmeInfo?.isLive ? (
+          <div className="bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 text-white p-6 sm:p-8 rounded-2xl shadow-lg space-y-3 relative overflow-hidden">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-extrabold uppercase tracking-widest bg-white/20 text-white px-2.5 py-0.5 rounded border border-white/30">
+                STATUS: PENDING ADMIN LAUNCH
+              </span>
             </div>
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900">
-              Welcome back, {user?.fullName || 'Participant'}
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-white">
+              The 90-Day Challenge Has Not Commenced Yet
             </h1>
-            <p className="text-xs text-slate-600">
-              Today's Focus: <span className="font-bold text-slate-800">{dayData?.dayFocus || 'No daily focus published for today yet.'}</span>
+            <p className="text-xs sm:text-sm text-amber-50 leading-relaxed max-w-2xl font-medium">
+              Welcome, {user?.fullName || 'Participant'}! Your EXCO leadership team is preparing your cohort schedule and task assignments. As soon as the challenge is officially commenced by your admin, the Day 1 countdown and daily growth checklist will unlock right here!
             </p>
           </div>
+        ) : (
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-5 sm:p-6 rounded-2xl border-slate-200 shadow-subtle-sm relative overflow-hidden">
+            <div className="space-y-1.5 z-10">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant="cyan">DAY {currentDayNum} / 90</Badge>
+                {programmeInfo?.currentPhaseTitle ? (
+                  <span className="text-[10px] sm:text-xs font-black text-brand-700 uppercase tracking-widest bg-brand-50 px-2.5 py-0.5 rounded border border-brand-200">
+                    PHASE {programmeInfo.currentPhaseNumber || 1}: {programmeInfo.currentPhaseTitle}
+                  </span>
+                ) : null}
+                {programmeInfo?.currentWeekTheme && (
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">
+                    WEEK {programmeInfo.currentWeekNumber || 1}: {programmeInfo.currentWeekTheme}
+                  </span>
+                )}
+              </div>
+              <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900">
+                Welcome back, {user?.fullName || 'Participant'}
+              </h1>
+              <p className="text-xs text-slate-600">
+                Today's Focus: <span className="font-bold text-slate-800">{dayData?.dayFocus || 'No daily focus published for today yet.'}</span>
+              </p>
+            </div>
 
-          <div className="flex items-center gap-4 z-10">
-            <div className="flex items-center gap-3 bg-amber-50 border border-amber-300 px-4 py-2.5 rounded-xl shadow-subtle-sm">
-              <Flame className="w-7 h-7 text-amber-500 fill-amber-500 animate-pulse" />
-              <div>
-                <span className="text-xl font-black text-slate-900 block leading-none">
-                  {progress?.streak?.currentStreak || 0} DAYS
-                </span>
-                <span className="text-[10px] font-extrabold text-amber-800 uppercase tracking-widest">
-                  Current Streak
-                </span>
+            <div className="flex items-center gap-4 z-10">
+              <div className="flex items-center gap-3 bg-amber-50 border border-amber-300 px-4 py-2.5 rounded-xl shadow-subtle-sm">
+                <Flame className="w-7 h-7 text-amber-500 fill-amber-500 animate-pulse" />
+                <div>
+                  <span className="text-xl font-black text-slate-900 block leading-none">
+                    {progress?.streak?.currentStreak || 0} DAYS
+                  </span>
+                  <span className="text-[10px] font-extrabold text-amber-800 uppercase tracking-widest">
+                    Current Streak
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Current Week Anchor Resource Spotlight */}
         {programmeInfo?.anchorResource && (
@@ -247,6 +284,35 @@ export default function ParticipantDashboard() {
 
         {/* WhatsApp Banner Integration */}
         <WhatsAppCommunityBanner />
+
+        {/* Daily Journal Reflection Box (Optional) */}
+        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle-sm space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-purple-600" />
+              <h3 className="text-sm font-bold text-slate-900">My Daily Reflection Note (Optional)</h3>
+            </div>
+            <span className="text-[10px] text-slate-400 font-medium">Private to you</span>
+          </div>
+          <textarea
+            rows={3}
+            value={journalNote}
+            onChange={(e) => setJournalNote(e.target.value)}
+            placeholder="Document your thoughts, wins, friction points, or prayers for today..."
+            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-brand-500 bg-slate-50/50"
+          />
+          <div className="flex justify-end">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleSaveJournalNote}
+              disabled={isSavingNote}
+              className="text-xs font-bold"
+            >
+              {isSavingNote ? 'Saving Note...' : 'Save Daily Reflection'}
+            </Button>
+          </div>
+        </div>
 
         {/* Today Tasks Checklist Section */}
         <div className="space-y-4">

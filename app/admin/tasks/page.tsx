@@ -441,6 +441,22 @@ export default function AdminTasksPage() {
     }
   };
 
+  const handleCommenceChallenge = async (isLive: boolean) => {
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      await api.commenceProgramme({ isLive, startDate: todayStr });
+      toast.success(
+        isLive ? 'Challenge Commenced & LIVE!' : 'Challenge Paused',
+        isLive
+          ? `The 90-Day Challenge is now live for all participants starting today (${todayStr}).`
+          : 'Challenge status set to draft mode.'
+      );
+      loadAdminTree();
+    } catch (err: any) {
+      toast.error('Action Failed', err.message || 'Unable to update challenge status');
+    }
+  };
+
   const phasesList = treeData?.programme?.phases || [];
 
   return (
@@ -492,6 +508,62 @@ export default function AdminTasksPage() {
             >
               <Plus className="w-3.5 h-3.5" /> Assign Task
             </Button>
+          </div>
+        </div>
+
+        {/* Challenge Launch & Commencement Control Bar */}
+        <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
+          treeData?.programme?.isLive
+            ? 'bg-emerald-50/90 border-emerald-300 text-emerald-950'
+            : 'bg-amber-50/90 border-amber-300 text-amber-950'
+        }`}>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className={`text-[10px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded border ${
+                treeData?.programme?.isLive
+                  ? 'bg-emerald-600 text-white border-emerald-700'
+                  : 'bg-amber-500 text-white border-amber-600'
+              }`}>
+                {treeData?.programme?.isLive ? 'STATUS: LIVE & COMMENCED' : 'STATUS: DRAFT (NOT LAUNCHED)'}
+              </span>
+              {treeData?.programme?.isLive && (
+                <span className="text-xs font-bold text-emerald-800">
+                  Started: {treeData.programme.startDate}
+                </span>
+              )}
+            </div>
+            <h3 className="text-sm font-extrabold text-slate-900">
+              {treeData?.programme?.isLive
+                ? 'The 90-Day Challenge is currently LIVE for all participants.'
+                : 'The 90-Day Challenge has not commenced yet.'}
+            </h3>
+            <p className="text-xs text-slate-600">
+              {treeData?.programme?.isLive
+                ? 'Participants can see daily tasks relative to the commencement date.'
+                : 'Configure your phases, weeks, and tasks below. Click "Commence Challenge" when ready to publish to participants!'}
+            </p>
+          </div>
+
+          <div className="shrink-0">
+            {treeData?.programme?.isLive ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => handleCommenceChallenge(false)}
+                className="bg-white hover:bg-slate-100 text-slate-700 border-slate-300"
+              >
+                Pause / Unpublish Challenge
+              </Button>
+            ) : (
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => handleCommenceChallenge(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md font-bold px-4 py-2"
+              >
+                🚀 Commence 90-Day Challenge
+              </Button>
+            )}
           </div>
         </div>
 

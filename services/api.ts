@@ -88,12 +88,17 @@ export const api = {
   },
   getCalendarOverview: () => fetcher('/programme/calendar'),
   getPublicResources: () => fetcher('/programme/resources'),
+  getJournalNote: (date?: string) => fetcher(`/programme/journal${date ? `?date=${date}` : ''}`),
+  saveJournalNote: (body: { noteDate: string; dayNumber?: number; content: string }) =>
+    fetcher('/programme/journal', { method: 'POST', body: JSON.stringify(body) }),
   addPersonalTask: (body: { title: string; category?: string; durationMinutes?: number }) =>
     fetcher('/programme/personal-task', { method: 'POST', body: JSON.stringify(body) }),
   deletePersonalTask: (id: string) => fetcher(`/programme/personal-task/${id}`, { method: 'DELETE' }),
 
   // Admin CMS & Templates
   getAdminProgrammeTree: () => fetcher('/programme/admin/tree'),
+  commenceProgramme: (body: { isLive: boolean; startDate?: string }) =>
+    fetcher('/programme/admin/commence', { method: 'POST', body: JSON.stringify(body) }),
   savePhase: (phase: any) => fetcher('/programme/admin/phase', { method: 'POST', body: JSON.stringify(phase) }),
   deletePhase: (id: string) => fetcher(`/programme/admin/phase/${id}`, { method: 'DELETE' }),
   saveWeek: (week: any) => fetcher('/programme/admin/week', { method: 'POST', body: JSON.stringify(week) }),

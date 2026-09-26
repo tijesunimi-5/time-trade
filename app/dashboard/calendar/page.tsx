@@ -28,6 +28,9 @@ export default function CalendarPage() {
   const [isDayLoading, setIsDayLoading] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
+  const [journalNote, setJournalNote] = useState('');
+  const [isSavingNote, setIsSavingNote] = useState(false);
+
   const loadCalendar = async () => {
     try {
       setIsLoading(true);
@@ -54,10 +57,32 @@ export default function CalendarPage() {
       setIsDayLoading(true);
       const details = await api.getDayDetails(dayNumber);
       setDayDetails(details);
+      if (details?.journalNote !== undefined) {
+        setJournalNote(details.journalNote);
+      } else {
+        setJournalNote('');
+      }
     } catch (err) {
       console.error('Failed to fetch day details:', err);
     } finally {
       setIsDayLoading(false);
+    }
+  };
+
+  const handleSaveJournalNote = async () => {
+    if (!dayDetails?.targetDate) return;
+    try {
+      setIsSavingNote(true);
+      await api.saveJournalNote({
+        noteDate: dayDetails.targetDate,
+        dayNumber: dayDetails.dayNumber || selectedDayNumber || 1,
+        content: journalNote,
+      });
+      toast.success('Journal Reflection Saved', `Note for Day ${dayDetails.dayNumber || selectedDayNumber} saved.`);
+    } catch (err: any) {
+      toast.error('Save Failed', err.message || 'Unable to save journal note');
+    } finally {
+      setIsSavingNote(false);
     }
   };
 
@@ -333,6 +358,36 @@ export default function CalendarPage() {
                 ))}
               </div>
             )}
+
+            {/* Daily Journal Reflection Box */}
+            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 mt-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-purple-600" />
+                  <h4 className="text-xs font-bold text-slate-900">
+                    My Daily Reflection & Thought Notes (Day {dayDetails?.dayNumber || selectedDayNumber})
+                  </h4>
+                </div>
+                <span className="text-[10px] text-slate-400 font-medium">Private Note</span>
+              </div>
+              <textarea
+                rows={3}
+                value={journalNote}
+                onChange={(e) => setJournalNote(e.target.value)}
+                placeholder="Document your thoughts, friction points, prayers, or lessons from this day..."
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+              />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={handleSaveJournalNote}
+                  disabled={isSavingNote}
+                  className="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold transition-colors shadow-sm"
+                >
+                  {isSavingNote ? 'Saving...' : 'Save Reflection Note'}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
