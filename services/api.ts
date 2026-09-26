@@ -87,6 +87,7 @@ export const api = {
     return fetcher(`/programme/day${q ? `?${q}` : ''}`);
   },
   getCalendarOverview: () => fetcher('/programme/calendar'),
+  getPublicResources: () => fetcher('/programme/resources'),
   addPersonalTask: (body: { title: string; category?: string; durationMinutes?: number }) =>
     fetcher('/programme/personal-task', { method: 'POST', body: JSON.stringify(body) }),
   deletePersonalTask: (id: string) => fetcher(`/programme/personal-task/${id}`, { method: 'DELETE' }),

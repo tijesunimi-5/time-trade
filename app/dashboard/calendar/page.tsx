@@ -138,59 +138,53 @@ export default function CalendarPage() {
         </div>
 
         {/* Phase Navigation Tabs */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
-          {[
-            {
-              phaseNumber: 1,
-              title: 'PHASE 1: RESET',
-              subtitle: 'Days 1 – 30',
-              desc: 'Pause friction, examine beliefs, habits & boundaries.',
-              isLocked: false,
-            },
-            {
-              phaseNumber: 2,
-              title: 'PHASE 2: RESTART',
-              subtitle: 'Days 31 – 60',
-              desc: 'Rebuild healthier habits, systems & relationships.',
-              isLocked: (calendarData?.activePhaseNumber || 1) < 2,
-            },
-            {
-              phaseNumber: 3,
-              title: 'PHASE 3: REFOCUS',
-              subtitle: 'Days 61 – 90',
-              desc: 'Intentionally commit long-term energy & focus.',
-              isLocked: (calendarData?.activePhaseNumber || 1) < 3,
-            },
-          ].map((phase) => (
-            <button
-              key={phase.phaseNumber}
-              onClick={() => setSelectedPhase(phase.phaseNumber)}
-              className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden ${
-                selectedPhase === phase.phaseNumber
-                  ? 'bg-white border-brand-600 shadow-md ring-2 ring-brand-500/20'
-                  : 'bg-white/60 border-slate-200 hover:border-slate-300'
-              }`}
-            >
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
-                  {phase.title}
-                </span>
-                {phase.isLocked ? (
-                  <span className="flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                    <Lock className="w-3 h-3 text-amber-600" />
-                    LOCKED
+        {calendarData?.phases?.length === 0 ? (
+          <div className="p-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200 space-y-3">
+            <div className="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mx-auto">
+              <CalendarIcon className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-bold text-slate-900">No Programme Schedule Published Yet</h3>
+            <p className="text-xs text-slate-500 max-w-md mx-auto">
+              Your EXCO leadership team has not published any active phases or week schedules yet. Check back soon for cohort activities!
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+            {calendarData?.phases?.map((phase: any) => (
+              <button
+                key={phase.id || phase.phaseNumber}
+                onClick={() => setSelectedPhase(phase.phaseNumber)}
+                className={`p-4 rounded-2xl border text-left transition-all relative overflow-hidden ${
+                  selectedPhase === phase.phaseNumber
+                    ? 'bg-white border-brand-600 shadow-md ring-2 ring-brand-500/20'
+                    : 'bg-white/60 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-slate-900 uppercase tracking-wider">
+                    Phase {phase.phaseNumber}: {phase.title}
                   </span>
-                ) : (
-                  <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    UNLOCKED
-                  </span>
+                  {phase.isLocked ? (
+                    <span className="flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                      <Lock className="w-3 h-3 text-amber-600" />
+                      LOCKED
+                    </span>
+                  ) : (
+                    <span className="text-[10px] font-extrabold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      UNLOCKED
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] font-bold text-brand-600 mt-1">
+                  Duration: {phase.durationDays || 30} Days ({phase.weeks?.length || 0} Weeks)
+                </div>
+                {phase.objective && (
+                  <p className="text-xs text-slate-500 mt-1 line-clamp-2">{phase.objective}</p>
                 )}
-              </div>
-              <div className="text-[11px] font-bold text-brand-600 mt-1">{phase.subtitle}</div>
-              <p className="text-xs text-slate-500 mt-1 line-clamp-2">{phase.desc}</p>
-            </button>
-          ))}
-        </div>
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Selected Phase View */}
         {isLoading ? (

@@ -123,18 +123,26 @@ export default function ParticipantDashboard() {
           <div className="space-y-1.5 z-10">
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="cyan">DAY {currentDayNum} / 90</Badge>
-              <span className="text-[10px] sm:text-xs font-black text-brand-700 uppercase tracking-widest bg-brand-50 px-2.5 py-0.5 rounded border border-brand-200">
-                PHASE {programmeInfo?.currentPhaseNumber || 1}: {programmeInfo?.currentPhaseTitle || 'RESET'}
-              </span>
-              <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">
-                WEEK {programmeInfo?.currentWeekNumber || 1}: {programmeInfo?.currentWeekTheme || 'Reset Your Mindset'}
-              </span>
+              {programmeInfo?.currentPhaseTitle ? (
+                <span className="text-[10px] sm:text-xs font-black text-brand-700 uppercase tracking-widest bg-brand-50 px-2.5 py-0.5 rounded border border-brand-200">
+                  PHASE {programmeInfo.currentPhaseNumber || 1}: {programmeInfo.currentPhaseTitle}
+                </span>
+              ) : (
+                <span className="text-[10px] sm:text-xs font-black text-slate-500 uppercase tracking-widest bg-slate-100 px-2.5 py-0.5 rounded border border-slate-200">
+                  PHASE: UNCONFIGURED
+                </span>
+              )}
+              {programmeInfo?.currentWeekTheme && (
+                <span className="text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-widest">
+                  WEEK {programmeInfo.currentWeekNumber || 1}: {programmeInfo.currentWeekTheme}
+                </span>
+              )}
             </div>
             <h1 className="text-xl sm:text-2xl lg:text-3xl font-black text-slate-900">
               Welcome back, {user?.fullName || 'Participant'}
             </h1>
             <p className="text-xs text-slate-600">
-              Today's Focus: <span className="font-bold text-slate-800">{dayData?.dayFocus || 'Examine patterns & non-negotiable spiritual/mental habits'}</span>
+              Today's Focus: <span className="font-bold text-slate-800">{dayData?.dayFocus || 'No daily focus published for today yet.'}</span>
             </p>
           </div>
 
