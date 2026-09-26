@@ -72,7 +72,7 @@ export const api = {
     fetcher('/followup/notes', { method: 'POST', body: JSON.stringify({ participantId, noteContent }) }),
 
   // Leaderboard
-  getLeaderboard: () => fetcher('/leaderboard'),
+  getLeaderboard: (period?: string) => fetcher(`/leaderboard${period ? `?period=${period}` : ''}`),
 
   // Calendar
   getCalendarEvents: () => fetcher('/calendar'),
