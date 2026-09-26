@@ -26,7 +26,7 @@ export const WhatsAppCommunityBanner: React.FC = () => {
         </div>
 
         <a
-          href="https://chat.whatsapp.com/demo"
+          href="https://chat.whatsapp.com/J6AyDKAcY9N7B1QLyFtOVe"
           target="_blank"
           rel="noopener noreferrer"
           className="w-full md:w-auto"

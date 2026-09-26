@@ -251,7 +251,7 @@ export default function ParticipantDashboard() {
                   className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 bg-brand-50 hover:bg-brand-100 px-2.5 py-1 rounded-lg border border-brand-200 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Add Personal Habit
+                  Add Personal Tasks
                 </button>
               </div>
               <p className="text-xs text-slate-500">Complete assigned pillar tasks and curated resources below</p>
