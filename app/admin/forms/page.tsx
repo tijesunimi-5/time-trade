@@ -484,7 +484,7 @@ export default function AdminFormsBuilderPage() {
                       <option value="textarea">Paragraph / Long Text</option>
                       <option value="select">Single Choice Dropdown</option>
                       <option value="multiselect">Multiple Choice Checkboxes</option>
-                      <option value="date">Date of Birth / Date</option>
+                      <option value="date">Date of Birth (Month & Day)</option>
                     </select>
                   </div>
 
@@ -688,7 +688,7 @@ export default function AdminFormsBuilderPage() {
                     <option value="textarea">Paragraph / Long Text</option>
                     <option value="select">Single Choice Dropdown</option>
                     <option value="multiselect">Multiple Choice Checkboxes</option>
-                    <option value="date">Date of Birth / Date</option>
+                    <option value="date">Date of Birth (Month & Day)</option>
                   </select>
                 </div>
 

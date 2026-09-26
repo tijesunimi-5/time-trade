@@ -121,15 +121,80 @@ export const DynamicRegisterForm: React.FC<DynamicRegisterFormProps> = ({ fields
         }
 
         if (field.fieldType === 'date') {
+          const months = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+          ];
+          const days = Array.from({ length: 31 }, (_, i) => i + 1);
+
+          let currentMonth = '';
+          let currentDay = '';
+
+          if (typeof value === 'string' && value.trim() !== '') {
+            const parts = value.trim().split(' ');
+            if (parts.length === 2 && months.includes(parts[0])) {
+              currentMonth = parts[0];
+              currentDay = parts[1];
+            } else if (value.includes('-')) {
+              const dateParts = value.split('-');
+              if (dateParts.length >= 2) {
+                const mIdx = parseInt(dateParts[dateParts.length - 2], 10) - 1;
+                const dVal = parseInt(dateParts[dateParts.length - 1], 10);
+                if (mIdx >= 0 && mIdx < 12) currentMonth = months[mIdx];
+                if (dVal >= 1 && dVal <= 31) currentDay = dVal.toString();
+              }
+            }
+          }
+
+          const handleMonthChange = (mVal: string) => {
+            const newDay = currentDay || '1';
+            if (mVal) {
+              onChange(field.fieldName, `${mVal} ${newDay}`);
+            } else {
+              onChange(field.fieldName, '');
+            }
+          };
+
+          const handleDayChange = (dVal: string) => {
+            const newMonth = currentMonth || months[0];
+            if (dVal) {
+              onChange(field.fieldName, `${newMonth} ${dVal}`);
+            } else {
+              onChange(field.fieldName, '');
+            }
+          };
+
           return (
-            <Input
-              key={field.id}
-              label={field.label}
-              type="date"
-              value={value}
-              onChange={(e) => onChange(field.fieldName, e.target.value)}
-              required={field.isRequired}
-            />
+            <div key={field.id} className="space-y-1">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                {field.label} {field.isRequired && <span className="text-rose-500">*</span>}
+              </label>
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={currentMonth}
+                  onChange={(e) => handleMonthChange(e.target.value)}
+                  required={field.isRequired}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white shadow-xs"
+                >
+                  <option value="">Select Month</option>
+                  {months.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+
+                <select
+                  value={currentDay}
+                  onChange={(e) => handleDayChange(e.target.value)}
+                  required={field.isRequired}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs font-medium text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent bg-white shadow-xs"
+                >
+                  <option value="">Select Day</option>
+                  {days.map((d) => (
+                    <option key={d} value={d.toString()}>{d}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
           );
         }
 
