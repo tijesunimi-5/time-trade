@@ -9,7 +9,7 @@ import { Input } from '../../../components/ui/Input';
 import { api } from '../../../services/api';
 import { Loader } from '../../../components/ui/Loader';
 import { toast } from '../../../store/useToastStore';
-import { Plus, Trash2, Pencil, BookOpen, Layers, CheckSquare, FolderPlus, ArrowRight, Calendar } from 'lucide-react';
+import { Plus, Trash2, Pencil, BookOpen, Layers, CheckSquare, FolderPlus, ArrowRight, Calendar, Clock } from 'lucide-react';
 
 export default function AdminTasksPage() {
   const [activeTab, setActiveTab] = useState<'TREE' | 'TEMPLATES' | 'RESOURCES'>('TREE');
@@ -58,6 +58,7 @@ export default function AdminTasksPage() {
   const [taskDesc, setTaskDesc] = useState('');
   const [taskPillar, setTaskPillar] = useState('SPIRITUAL');
   const [taskType, setTaskType] = useState('GROWTH');
+  const [taskDurationMinutes, setTaskDurationMinutes] = useState<number>(15);
   const [isNonNegotiable, setIsNonNegotiable] = useState(false);
   const [pageRange, setPageRange] = useState('');
   const [timestampRange, setTimestampRange] = useState('');
@@ -68,6 +69,7 @@ export default function AdminTasksPage() {
   const [templateDesc, setTemplateDesc] = useState('');
   const [templatePillar, setTemplatePillar] = useState('SPIRITUAL');
   const [templateType, setTemplateType] = useState('GROWTH');
+  const [templateDurationMinutes, setTemplateDurationMinutes] = useState<number>(15);
 
   // Resource Form State
   const [resourceTitle, setResourceTitle] = useState('');
@@ -257,6 +259,7 @@ export default function AdminTasksPage() {
     setTaskDesc('');
     setTaskPillar('SPIRITUAL');
     setTaskType('GROWTH');
+    setTaskDurationMinutes(15);
     setIsNonNegotiable(false);
     setPageRange('');
     setTimestampRange('');
@@ -273,6 +276,7 @@ export default function AdminTasksPage() {
     setTaskDesc(task.description || '');
     setTaskPillar(task.pillar || 'SPIRITUAL');
     setTaskType(task.taskType || 'GROWTH');
+    setTaskDurationMinutes(task.durationMinutes || 15);
     setIsNonNegotiable(!!task.isNonNegotiable);
     setPageRange(task.pageRange || '');
     setTimestampRange(task.timestampRange || '');
@@ -291,6 +295,7 @@ export default function AdminTasksPage() {
         description: taskDesc,
         pillar: taskPillar,
         taskType,
+        durationMinutes: Number(taskDurationMinutes) || 15,
         isNonNegotiable,
         pageRange: pageRange || undefined,
         timestampRange: timestampRange || undefined,
@@ -330,6 +335,7 @@ export default function AdminTasksPage() {
     setTemplateDesc('');
     setTemplatePillar('SPIRITUAL');
     setTemplateType('GROWTH');
+    setTemplateDurationMinutes(15);
     setShowTemplateModal(true);
   };
 
@@ -339,6 +345,7 @@ export default function AdminTasksPage() {
     setTemplateDesc(tmpl.description || '');
     setTemplatePillar(tmpl.pillar || 'SPIRITUAL');
     setTemplateType(tmpl.taskType || 'GROWTH');
+    setTemplateDurationMinutes(tmpl.defaultDurationMinutes || 15);
     setShowTemplateModal(true);
   };
 
@@ -351,6 +358,7 @@ export default function AdminTasksPage() {
         description: templateDesc,
         pillar: templatePillar,
         taskType: templateType,
+        defaultDurationMinutes: Number(templateDurationMinutes) || 15,
       });
       setShowTemplateModal(false);
       toast.success(
@@ -383,6 +391,7 @@ export default function AdminTasksPage() {
     setTaskDesc(tmpl.description || '');
     setTaskPillar(tmpl.pillar || 'SPIRITUAL');
     setTaskType(tmpl.taskType || 'GROWTH');
+    setTaskDurationMinutes(tmpl.defaultDurationMinutes || 15);
     setIsNonNegotiable(tmpl.taskType === 'NON_NEGOTIABLE');
     setPageRange('');
     setTimestampRange('');
@@ -770,6 +779,10 @@ export default function AdminTasksPage() {
                                               <div className="flex items-center gap-2 truncate pr-2">
                                                 <Badge variant={t.pillar?.toLowerCase() as any}>{t.pillar}</Badge>
                                                 <span className="font-medium truncate">{t.title}</span>
+                                                 <span className="text-[9px] font-bold text-slate-500 bg-slate-200/80 px-1.5 py-0.5 rounded flex items-center gap-0.5 shrink-0">
+                                                   <Clock className="w-2.5 h-2.5 text-slate-500" />
+                                                   {t.durationMinutes || 15}m
+                                                 </span>
                                                 {t.isNonNegotiable && (
                                                   <span className="text-[9px] font-extrabold uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
                                                     Non-Neg
@@ -821,6 +834,10 @@ export default function AdminTasksPage() {
                         <Badge variant={tmpl.pillar?.toLowerCase() as any}>{tmpl.pillar}</Badge>
                         <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
                           {tmpl.taskType}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200 flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-slate-500" />
+                          {tmpl.defaultDurationMinutes || 15} mins
                         </span>
                       </div>
                       <h3 className="text-sm font-bold text-slate-900">{tmpl.title}</h3>
@@ -1168,6 +1185,17 @@ export default function AdminTasksPage() {
                 </div>
               </div>
 
+              <Input
+                label="Task Duration / Minimum Time Required (Minutes)"
+                type="number"
+                min={1}
+                max={480}
+                required
+                value={taskDurationMinutes}
+                onChange={(e) => setTaskDurationMinutes(parseInt(e.target.value, 10) || 15)}
+                placeholder="e.g. 15, 30, 45, 60"
+              />
+
               <div className="grid grid-cols-2 gap-3">
                 <Input
                   label="Book Page Range (Optional)"
@@ -1267,6 +1295,17 @@ export default function AdminTasksPage() {
                   </select>
                 </div>
               </div>
+
+              <Input
+                label="Default Duration / Minimum Time (Minutes)"
+                type="number"
+                min={1}
+                max={480}
+                required
+                value={templateDurationMinutes}
+                onChange={(e) => setTemplateDurationMinutes(parseInt(e.target.value, 10) || 15)}
+                placeholder="e.g. 15, 30, 45, 60"
+              />
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="glass" size="sm" onClick={() => setShowTemplateModal(false)}>
                   Cancel
