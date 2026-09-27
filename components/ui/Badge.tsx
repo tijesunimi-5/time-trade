@@ -2,18 +2,7 @@ import React from 'react';
 import { cn } from '../../utils/cn';
 
 interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
-  variant?:
-    | 'spiritual'
-    | 'mental'
-    | 'social'
-    | 'nonNegotiable'
-    | 'active'
-    | 'attention'
-    | 'inactive'
-    | 'cyan'
-    | 'emerald'
-    | 'slate'
-    | 'purple';
+  variant?: string;
 }
 
 export const Badge: React.FC<BadgeProps> = ({
@@ -24,11 +13,16 @@ export const Badge: React.FC<BadgeProps> = ({
 }) => {
   const base = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider border';
 
-  const variants = {
+  const normalizedVariant = (variant || 'cyan').toLowerCase();
+
+  const variants: Record<string, string> = {
     spiritual: 'bg-purple-50 text-purple-700 border-purple-200',
     mental: 'bg-sky-50 text-sky-700 border-sky-200',
     social: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    nonNegotiable: 'bg-amber-100 text-amber-800 border-amber-300 shadow-glow-gold font-extrabold animate-pulse',
+    physical: 'bg-orange-50 text-orange-700 border-orange-200',
+    financial: 'bg-teal-50 text-teal-700 border-teal-200',
+    relationship: 'bg-pink-50 text-pink-700 border-pink-200',
+    nonnegotiable: 'bg-amber-100 text-amber-800 border-amber-300 shadow-glow-gold font-extrabold animate-pulse',
     active: 'bg-emerald-50 text-emerald-700 border-emerald-200',
     attention: 'bg-amber-50 text-amber-700 border-amber-200',
     inactive: 'bg-rose-50 text-rose-700 border-rose-200',
@@ -38,8 +32,10 @@ export const Badge: React.FC<BadgeProps> = ({
     purple: 'bg-purple-50 text-purple-800 border-purple-300',
   };
 
+  const badgeStyle = variants[normalizedVariant] || 'bg-indigo-50 text-indigo-700 border-indigo-200';
+
   return (
-    <span className={cn(base, variants[variant] || variants.cyan, className)} {...props}>
+    <span className={cn(base, badgeStyle, className)} {...props}>
       {children}
     </span>
   );

@@ -8,9 +8,10 @@ export interface Task {
   id: string;
   title: string;
   description: string;
-  pillar: 'SPIRITUAL' | 'SOCIAL' | 'MENTAL';
+  pillar: string;
   category?: string;
   taskType?: string;
+  timeOfDay?: string;
   frequencyType?: string;
   isNonNegotiable: boolean;
   isOptional?: boolean;
@@ -45,12 +46,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   isReadOnly = false,
   readOnlyMessage,
 }) => {
-  const pillarVariants = {
-    SPIRITUAL: 'spiritual',
-    MENTAL: 'mental',
-    SOCIAL: 'social',
-  } as const;
-
   const getTaskTypeBadge = (type?: string) => {
     switch (type) {
       case 'NON_NEGOTIABLE':
@@ -61,6 +56,19 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         return <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-purple-100 text-purple-800">COMMUNITY</span>;
       case 'PERSONAL':
         return <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800">PERSONAL HABIT</span>;
+      default:
+        return null;
+    }
+  };
+
+  const getTimeOfDayBadge = (tod?: string) => {
+    switch (tod) {
+      case 'MORNING':
+        return <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-200">🌅 MORNING</span>;
+      case 'AFTERNOON':
+        return <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-sky-100 text-sky-900 border border-sky-200">☀️ AFTERNOON</span>;
+      case 'NIGHT':
+        return <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-900 border border-indigo-200">🌙 NIGHT</span>;
       default:
         return null;
     }
@@ -81,8 +89,9 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         <div className="space-y-2 flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2">
             {task.isNonNegotiable && <Badge variant="nonNegotiable">NON-NEGOTIABLE</Badge>}
-            <Badge variant={pillarVariants[task.pillar] || 'mental'}>{task.pillar}</Badge>
+            <Badge variant={task.pillar?.toLowerCase()}>{task.pillar}</Badge>
             {getTaskTypeBadge(task.taskType)}
+            {getTimeOfDayBadge(task.timeOfDay)}
             {task.durationMinutes && (
               <span className="text-[10px] sm:text-[11px] font-semibold text-slate-500 flex items-center gap-1">
                 <Clock className="w-3 h-3 text-brand-600" />

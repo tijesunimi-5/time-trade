@@ -136,7 +136,8 @@ export const api = {
   deleteDynamicFormField: (id: string) => fetcher(`/admin/forms/fields/${id}`, { method: 'DELETE' }),
   reorderDynamicFormFields: (fieldOrders: { id: string; displayOrder: number }[]) =>
     fetcher('/admin/forms/fields/reorder', { method: 'PUT', body: JSON.stringify({ fieldOrders }) }),
-  updateSettings: (settings: { isAdminRegistrationActive: boolean }) =>
+  getSettings: () => fetcher('/admin/settings'),
+  updateSettings: (settings: { isAdminRegistrationActive?: boolean; pillars?: string[] | string }) =>
     fetcher('/admin/settings', { method: 'PUT', body: JSON.stringify(settings) }),
 
   // Feedback

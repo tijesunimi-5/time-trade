@@ -59,6 +59,8 @@ export default function AdminTasksPage() {
   const [taskPillar, setTaskPillar] = useState('SPIRITUAL');
   const [taskType, setTaskType] = useState('GROWTH');
   const [taskDurationMinutes, setTaskDurationMinutes] = useState<number>(15);
+  const [taskTimeOfDay, setTaskTimeOfDay] = useState<string>('ANYTIME');
+  const [availablePillars, setAvailablePillars] = useState<string[]>(['SPIRITUAL', 'MENTAL', 'SOCIAL', 'PHYSICAL', 'FINANCIAL', 'RELATIONSHIP']);
   const [isNonNegotiable, setIsNonNegotiable] = useState(false);
   const [pageRange, setPageRange] = useState('');
   const [timestampRange, setTimestampRange] = useState('');
@@ -70,6 +72,7 @@ export default function AdminTasksPage() {
   const [templatePillar, setTemplatePillar] = useState('SPIRITUAL');
   const [templateType, setTemplateType] = useState('GROWTH');
   const [templateDurationMinutes, setTemplateDurationMinutes] = useState<number>(15);
+  const [templateTimeOfDay, setTemplateTimeOfDay] = useState<string>('ANYTIME');
 
   // Resource Form State
   const [resourceTitle, setResourceTitle] = useState('');
@@ -82,6 +85,11 @@ export default function AdminTasksPage() {
       setIsLoading(true);
       const res = await api.getAdminProgrammeTree();
       setTreeData(res);
+      api.getSettings().then((sRes) => {
+        if (sRes.settings?.pillarsList && Array.isArray(sRes.settings.pillarsList)) {
+          setAvailablePillars(sRes.settings.pillarsList);
+        }
+      }).catch((e) => console.error(e));
     } catch (err) {
       console.error('Failed to load admin tree:', err);
     } finally {
@@ -260,6 +268,7 @@ export default function AdminTasksPage() {
     setTaskPillar('SPIRITUAL');
     setTaskType('GROWTH');
     setTaskDurationMinutes(15);
+    setTaskTimeOfDay('ANYTIME');
     setIsNonNegotiable(false);
     setPageRange('');
     setTimestampRange('');
@@ -277,6 +286,7 @@ export default function AdminTasksPage() {
     setTaskPillar(task.pillar || 'SPIRITUAL');
     setTaskType(task.taskType || 'GROWTH');
     setTaskDurationMinutes(task.durationMinutes || 15);
+    setTaskTimeOfDay(task.timeOfDay || 'ANYTIME');
     setIsNonNegotiable(!!task.isNonNegotiable);
     setPageRange(task.pageRange || '');
     setTimestampRange(task.timestampRange || '');
@@ -295,6 +305,7 @@ export default function AdminTasksPage() {
         description: taskDesc,
         pillar: taskPillar,
         taskType,
+        timeOfDay: taskTimeOfDay,
         durationMinutes: Number(taskDurationMinutes) || 15,
         isNonNegotiable,
         pageRange: pageRange || undefined,
@@ -336,6 +347,7 @@ export default function AdminTasksPage() {
     setTemplatePillar('SPIRITUAL');
     setTemplateType('GROWTH');
     setTemplateDurationMinutes(15);
+    setTemplateTimeOfDay('ANYTIME');
     setShowTemplateModal(true);
   };
 
@@ -346,6 +358,7 @@ export default function AdminTasksPage() {
     setTemplatePillar(tmpl.pillar || 'SPIRITUAL');
     setTemplateType(tmpl.taskType || 'GROWTH');
     setTemplateDurationMinutes(tmpl.defaultDurationMinutes || 15);
+    setTemplateTimeOfDay(tmpl.timeOfDay || 'ANYTIME');
     setShowTemplateModal(true);
   };
 
@@ -358,6 +371,7 @@ export default function AdminTasksPage() {
         description: templateDesc,
         pillar: templatePillar,
         taskType: templateType,
+        timeOfDay: templateTimeOfDay,
         defaultDurationMinutes: Number(templateDurationMinutes) || 15,
       });
       setShowTemplateModal(false);
@@ -392,6 +406,7 @@ export default function AdminTasksPage() {
     setTaskPillar(tmpl.pillar || 'SPIRITUAL');
     setTaskType(tmpl.taskType || 'GROWTH');
     setTaskDurationMinutes(tmpl.defaultDurationMinutes || 15);
+    setTaskTimeOfDay(tmpl.timeOfDay || 'ANYTIME');
     setIsNonNegotiable(tmpl.taskType === 'NON_NEGOTIABLE');
     setPageRange('');
     setTimestampRange('');
@@ -1162,9 +1177,9 @@ export default function AdminTasksPage() {
                     onChange={(e) => setTaskPillar(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none"
                   >
-                    <option value="SPIRITUAL">SPIRITUAL</option>
-                    <option value="MENTAL">MENTAL</option>
-                    <option value="SOCIAL">SOCIAL</option>
+                    {availablePillars.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -1185,16 +1200,31 @@ export default function AdminTasksPage() {
                 </div>
               </div>
 
-              <Input
-                label="Task Duration / Minimum Time Required (Minutes)"
-                type="number"
-                min={1}
-                max={480}
-                required
-                value={taskDurationMinutes}
-                onChange={(e) => setTaskDurationMinutes(parseInt(e.target.value, 10) || 15)}
-                placeholder="e.g. 15, 30, 45, 60"
-              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Duration (Minutes)"
+                  type="number"
+                  min={1}
+                  max={480}
+                  required
+                  value={taskDurationMinutes}
+                  onChange={(e) => setTaskDurationMinutes(parseInt(e.target.value, 10) || 15)}
+                  placeholder="e.g. 15, 30, 45, 60"
+                />
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Time of Day (Optional)</label>
+                  <select
+                    value={taskTimeOfDay}
+                    onChange={(e) => setTaskTimeOfDay(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none"
+                  >
+                    <option value="ANYTIME">Anytime (Normal Task)</option>
+                    <option value="MORNING">🌅 Morning</option>
+                    <option value="AFTERNOON">☀️ Afternoon</option>
+                    <option value="NIGHT">🌙 Night / Evening</option>
+                  </select>
+                </div>
+              </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <Input
@@ -1276,9 +1306,9 @@ export default function AdminTasksPage() {
                     onChange={(e) => setTemplatePillar(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none"
                   >
-                    <option value="SPIRITUAL">SPIRITUAL</option>
-                    <option value="MENTAL">MENTAL</option>
-                    <option value="SOCIAL">SOCIAL</option>
+                    {availablePillars.map((p) => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
                   </select>
                 </div>
                 <div>
@@ -1296,16 +1326,31 @@ export default function AdminTasksPage() {
                 </div>
               </div>
 
-              <Input
-                label="Default Duration / Minimum Time (Minutes)"
-                type="number"
-                min={1}
-                max={480}
-                required
-                value={templateDurationMinutes}
-                onChange={(e) => setTemplateDurationMinutes(parseInt(e.target.value, 10) || 15)}
-                placeholder="e.g. 15, 30, 45, 60"
-              />
+              <div className="grid grid-cols-2 gap-3">
+                <Input
+                  label="Default Duration (Minutes)"
+                  type="number"
+                  min={1}
+                  max={480}
+                  required
+                  value={templateDurationMinutes}
+                  onChange={(e) => setTemplateDurationMinutes(parseInt(e.target.value, 10) || 15)}
+                  placeholder="e.g. 15, 30, 45, 60"
+                />
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Default Time of Day</label>
+                  <select
+                    value={templateTimeOfDay}
+                    onChange={(e) => setTemplateTimeOfDay(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none"
+                  >
+                    <option value="ANYTIME">Anytime (Normal Task)</option>
+                    <option value="MORNING">🌅 Morning</option>
+                    <option value="AFTERNOON">☀️ Afternoon</option>
+                    <option value="NIGHT">🌙 Night / Evening</option>
+                  </select>
+                </div>
+              </div>
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="glass" size="sm" onClick={() => setShowTemplateModal(false)}>
                   Cancel

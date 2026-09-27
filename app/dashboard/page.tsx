@@ -20,7 +20,8 @@ export default function ParticipantDashboard() {
   const [dayData, setDayData] = useState<any>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [progress, setProgress] = useState<any>(null);
-  const [activePillar, setActivePillar] = useState<'ALL' | 'SPIRITUAL' | 'MENTAL' | 'SOCIAL'>('ALL');
+  const [activePillar, setActivePillar] = useState<string>('ALL');
+  const [activeTimeOfDay, setActiveTimeOfDay] = useState<'ALL' | 'MORNING' | 'AFTERNOON' | 'NIGHT'>('ALL');
   const [isLoading, setIsLoading] = useState(true);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
@@ -130,8 +131,9 @@ export default function ParticipantDashboard() {
   };
 
   const filteredTasks = tasks.filter((t) => {
-    if (activePillar === 'ALL') return true;
-    return t.pillar === activePillar;
+    const matchesPillar = activePillar === 'ALL' || t.pillar?.toUpperCase() === activePillar;
+    const matchesTimeOfDay = activeTimeOfDay === 'ALL' || t.timeOfDay === activeTimeOfDay;
+    return matchesPillar && matchesTimeOfDay;
   });
 
   const completedTodayCount = tasks.filter((t) => t.isCompleted).length;
@@ -194,6 +196,28 @@ export default function ParticipantDashboard() {
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Time of Day Filter Bar */}
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-slate-200/50 border border-slate-300/50 overflow-x-auto no-scrollbar max-w-fit">
+              {[
+                { id: 'ALL', label: 'All Times' },
+                { id: 'MORNING', label: '🌅 Morning' },
+                { id: 'AFTERNOON', label: '☀️ Afternoon' },
+                { id: 'NIGHT', label: '🌙 Night' },
+              ].map((tod) => (
+                <button
+                  key={tod.id}
+                  onClick={() => setActiveTimeOfDay(tod.id as any)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${
+                    activeTimeOfDay === tod.id
+                      ? 'bg-white text-brand-700 shadow-sm border border-slate-200'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  {tod.label}
+                </button>
+              ))}
             </div>
           </div>
         )}
@@ -333,7 +357,7 @@ export default function ParticipantDashboard() {
 
             {/* Pillar Filter Tabs */}
             <div className="flex items-center gap-1 p-1 rounded-xl bg-slate-200/70 border border-slate-300/60 overflow-x-auto no-scrollbar">
-              {(['ALL', 'SPIRITUAL', 'MENTAL', 'SOCIAL'] as const).map((pillar) => (
+              {(['ALL', 'SPIRITUAL', 'MENTAL', 'SOCIAL', 'PHYSICAL', 'FINANCIAL', 'RELATIONSHIP'] as const).map((pillar) => (
                 <button
                   key={pillar}
                   onClick={() => setActivePillar(pillar)}
