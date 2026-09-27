@@ -138,4 +138,18 @@ export const api = {
     fetcher('/admin/forms/fields/reorder', { method: 'PUT', body: JSON.stringify({ fieldOrders }) }),
   updateSettings: (settings: { isAdminRegistrationActive: boolean }) =>
     fetcher('/admin/settings', { method: 'PUT', body: JSON.stringify(settings) }),
+
+  // Feedback
+  submitFeedback: (body: { category: string; subject: string; message: string }) =>
+    fetcher('/feedback', { method: 'POST', body: JSON.stringify(body) }),
+  getMyFeedback: () => fetcher('/feedback/my'),
+  getAllFeedbackAdmin: (status?: string, category?: string) => {
+    const params = new URLSearchParams();
+    if (status) params.append('status', status);
+    if (category) params.append('category', category);
+    const q = params.toString();
+    return fetcher(`/feedback/admin${q ? `?${q}` : ''}`);
+  },
+  respondToFeedbackAdmin: (id: string, body: { status?: string; adminResponse?: string }) =>
+    fetcher(`/feedback/admin/${id}/respond`, { method: 'PUT', body: JSON.stringify(body) }),
 };

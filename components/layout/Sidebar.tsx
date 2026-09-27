@@ -17,6 +17,7 @@ import {
   Sparkles,
   Menu,
   X,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -48,6 +49,7 @@ export const Sidebar: React.FC = () => {
     { href: '/dashboard/calendar', label: 'Challenge Calendar', icon: Calendar },
     { href: '/dashboard/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/dashboard/resources', label: 'Resources', icon: BookOpen },
+    { href: '/dashboard/feedback', label: 'Feedback & Support', icon: MessageSquare },
   ];
 
   const followUpLinks = [
@@ -71,6 +73,7 @@ export const Sidebar: React.FC = () => {
     { href: '/admin/participants', label: 'Participant Answers', icon: Users },
     { href: '/admin/forms', label: 'Question Builder', icon: Settings },
     { href: '/admin/tasks', label: 'Task Engine Manager', icon: CheckSquare },
+    { href: '/admin/feedback', label: 'Feedback Management', icon: MessageSquare },
     { href: '/admin/settings', label: 'EXCO System Settings', icon: Settings },
   ];
 
