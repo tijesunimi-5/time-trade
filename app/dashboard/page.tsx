@@ -130,11 +130,26 @@ export default function ParticipantDashboard() {
     }
   };
 
-  const filteredTasks = tasks.filter((t) => {
-    const matchesPillar = activePillar === 'ALL' || t.pillar?.toUpperCase() === activePillar;
-    const matchesTimeOfDay = activeTimeOfDay === 'ALL' || t.timeOfDay === activeTimeOfDay;
-    return matchesPillar && matchesTimeOfDay;
-  });
+  const getTimeOfDayPriority = (tod?: string | null): number => {
+    if (!tod) return 2;
+    const upper = tod.trim().toUpperCase();
+    if (upper === 'MORNING') return 1;
+    if (upper === 'NIGHT' || upper === 'EVENING') return 3;
+    return 2; // Normal (ANYTIME, AFTERNOON, etc.)
+  };
+
+  const filteredTasks = tasks
+    .filter((t) => {
+      const matchesPillar = activePillar === 'ALL' || t.pillar?.toUpperCase() === activePillar;
+      const matchesTimeOfDay = activeTimeOfDay === 'ALL' || t.timeOfDay === activeTimeOfDay;
+      return matchesPillar && matchesTimeOfDay;
+    })
+    .sort((a, b) => {
+      const pA = getTimeOfDayPriority(a.timeOfDay);
+      const pB = getTimeOfDayPriority(b.timeOfDay);
+      if (pA !== pB) return pA - pB;
+      return (a.displayOrder ?? 0) - (b.displayOrder ?? 0);
+    });
 
   const completedTodayCount = tasks.filter((t) => t.isCompleted).length;
   const totalTodayCount = tasks.length;

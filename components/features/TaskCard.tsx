@@ -21,6 +21,7 @@ export interface Task {
   fileUrl?: string;
   fileName?: string;
   instructions?: string;
+  displayOrder?: number;
   isCompleted?: boolean;
   resource?: {
     id: string;
