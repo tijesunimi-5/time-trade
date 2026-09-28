@@ -53,7 +53,7 @@ export const Sidebar: React.FC = () => {
   ];
 
   const followUpLinks = [
-    { href: '/follow-up', label: 'Assigned Participants', icon: Users },
+    { href: '/follow-up', label: 'Follow-Up Toolkit', icon: Users },
   ];
 
   const isExco =
@@ -66,7 +66,10 @@ export const Sidebar: React.FC = () => {
 
   const showFollowUp =
     mounted &&
-    (user?.role?.includes('FOLLOW_UP') || user?.role?.includes('ADMIN') || user?.role?.includes('LEADERSHIP'));
+    (isExco ||
+      user?.role?.includes('FOLLOW_UP') ||
+      user?.role?.includes('ADMIN') ||
+      user?.role?.includes('LEADERSHIP'));
 
   const adminLinks = [
     { href: '/admin', label: 'Overview Analytics', icon: Shield },
