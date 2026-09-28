@@ -23,6 +23,8 @@ export default function AdminTasksPage() {
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [showResourceModal, setShowResourceModal] = useState(false);
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetTargetDayNumber, setResetTargetDayNumber] = useState<number>(1);
 
   // Editing Entity IDs (null if creating new)
   const [editingPhaseId, setEditingPhaseId] = useState<string | null>(null);
@@ -467,17 +469,32 @@ export default function AdminTasksPage() {
 
   const handleCommenceChallenge = async (isLive: boolean) => {
     try {
-      const todayStr = new Date().toISOString().split('T')[0];
-      await api.commenceProgramme({ isLive, startDate: todayStr });
+      const clientDate = new Date().toLocaleDateString('sv-SE');
+      await api.commenceProgramme({ isLive, clientDate, targetDayNumber: 1 });
       toast.success(
         isLive ? 'Challenge Commenced & LIVE!' : 'Challenge Paused',
         isLive
-          ? `The 90-Day Challenge is now live for all participants starting today (${todayStr}).`
+          ? `The 90-Day Challenge is now live for all participants starting today (${clientDate}).`
           : 'Challenge status set to draft mode.'
       );
       loadAdminTree();
     } catch (err: any) {
       toast.error('Action Failed', err.message || 'Unable to update challenge status');
+    }
+  };
+
+  const handleResetChallenge = async (targetDay: number) => {
+    try {
+      const clientDate = new Date().toLocaleDateString('sv-SE');
+      await api.resetProgramme({ targetDayNumber: targetDay, clientDate });
+      setShowResetModal(false);
+      toast.success(
+        'Calendar Calibrated!',
+        `Active challenge day set to Day ${targetDay} (Starting relative to ${clientDate}).`
+      );
+      loadAdminTree();
+    } catch (err: any) {
+      toast.error('Calibration Failed', err.message || 'Unable to calibrate challenge calendar');
     }
   };
 
@@ -568,13 +585,23 @@ export default function AdminTasksPage() {
             </p>
           </div>
 
-          <div className="shrink-0">
+          <div className="shrink-0 flex flex-wrap items-center gap-2">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setShowResetModal(true)}
+              className="bg-white hover:bg-slate-100 text-slate-800 border-slate-300 font-bold flex items-center gap-1.5 shadow-sm"
+            >
+              <Calendar className="w-3.5 h-3.5 text-brand-600" />
+              Calibrate / Set Active Day
+            </Button>
+
             {treeData?.programme?.isLive ? (
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={() => handleCommenceChallenge(false)}
-                className="bg-white hover:bg-slate-100 text-slate-700 border-slate-300"
+                className="bg-white hover:bg-slate-100 text-slate-700 border-slate-300 font-bold"
               >
                 Pause / Unpublish Challenge
               </Button>
@@ -1413,6 +1440,78 @@ export default function AdminTasksPage() {
                 </Button>
                 <Button type="submit" variant="primary" size="sm">
                   {editingResourceId ? 'Save Changes' : 'Save Resource'}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </div>
+      )}
+
+      {/* Calendar Reset / Calibration Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <Card variant="glass" className="max-w-md w-full p-6 space-y-4 bg-white shadow-2xl">
+            <div className="space-y-1">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-brand-600" />
+                Calibrate / Reset Challenge Day
+              </h3>
+              <p className="text-xs text-slate-500">
+                Set today as any active day number (1 to 90). The start date will be automatically calculated so today becomes your chosen day number. Zero tasks or user logs will be deleted!
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleResetChallenge(resetTargetDayNumber);
+              }}
+              className="space-y-4"
+            >
+              <Input
+                label="Target Day Number for Today (1 - 90)"
+                type="number"
+                min={1}
+                max={90}
+                required
+                value={resetTargetDayNumber}
+                onChange={(e) => setResetTargetDayNumber(parseInt(e.target.value, 10) || 1)}
+                placeholder="e.g. 1 for Day 1, 5 for Day 5"
+              />
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 block">Quick Day Presets</label>
+                <div className="flex flex-wrap gap-2">
+                  {[1, 2, 5, 10, 15, 30, 45, 60, 90].map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setResetTargetDayNumber(d)}
+                      className={`px-3 py-1 rounded-lg text-xs font-bold transition-all border ${
+                        resetTargetDayNumber === d
+                          ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      Day {d}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
+                <span className="font-bold block">💡 How Calibration Works:</span>
+                <p>
+                  Setting today as <strong>Day {resetTargetDayNumber}</strong> will configure the commencement start date so participants immediately see Day {resetTargetDayNumber} tasks starting today!
+                </p>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="glass" size="sm" onClick={() => setShowResetModal(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" variant="primary" size="sm" className="bg-brand-600 hover:bg-brand-700">
+                  Calibrate Calendar Now
                 </Button>
               </div>
             </form>

@@ -8,7 +8,7 @@ import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
 import { api } from '../../../services/api';
 import { toast } from '../../../store/useToastStore';
-import { Settings, Shield, Lock, Unlock, Check, Plus, Trash2, Layers } from 'lucide-react';
+import { Settings, Shield, Lock, Unlock, Check, Plus, Trash2, Layers, Calendar, RotateCcw } from 'lucide-react';
 
 const DEFAULT_PILLARS = ['SPIRITUAL', 'MENTAL', 'SOCIAL', 'PHYSICAL', 'FINANCIAL', 'RELATIONSHIP'];
 
@@ -16,8 +16,10 @@ export default function AdminSettingsPage() {
   const [isAdminRegistrationActive, setIsAdminRegistrationActive] = useState<boolean>(true);
   const [pillars, setPillars] = useState<string[]>(DEFAULT_PILLARS);
   const [newPillarInput, setNewPillarInput] = useState<string>('');
+  const [targetResetDay, setTargetResetDay] = useState<number>(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isCalibrating, setIsCalibrating] = useState(false);
 
   const loadSettings = async () => {
     try {
@@ -91,6 +93,22 @@ export default function AdminSettingsPage() {
     }
   };
 
+  const handleResetChallenge = async (dayNum: number) => {
+    try {
+      setIsCalibrating(true);
+      const clientDate = new Date().toLocaleDateString('sv-SE');
+      await api.resetProgramme({ targetDayNumber: dayNum, clientDate });
+      toast.success(
+        'Calendar Calibrated!',
+        `Challenge active day has been set to Day ${dayNum} (Starting relative to ${clientDate}).`
+      );
+    } catch (err: any) {
+      toast.error('Calibration Failed', err.message || 'Unable to calibrate calendar');
+    } finally {
+      setIsCalibrating(false);
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-slate-50">
       <Sidebar />
@@ -101,6 +119,67 @@ export default function AdminSettingsPage() {
           <h1 className="text-2xl sm:text-3xl font-black text-slate-900">System Configuration</h1>
           <p className="text-xs text-slate-500">Manage security settings, registration URL controls, and custom growth pillars</p>
         </div>
+
+        {/* Calendar Reset & Calibration Card */}
+        <Card variant="glass" className="space-y-6 bg-white p-6">
+          <div className="space-y-1 border-b border-slate-200 pb-4">
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-brand-600" />
+              Challenge Calendar Calibration & Active Day Reset
+            </h3>
+            <p className="text-xs text-slate-500">
+              Calibrate or reset the active challenge day to any number (Day 1 to Day 90). The start date is computed relative to your local date so participants immediately see the selected day without data loss.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+              <div className="w-full sm:w-48">
+                <Input
+                  label="Target Day Number for Today"
+                  type="number"
+                  min={1}
+                  max={90}
+                  value={targetResetDay}
+                  onChange={(e) => setTargetResetDay(parseInt(e.target.value, 10) || 1)}
+                  placeholder="1 - 90"
+                />
+              </div>
+              <Button
+                variant="primary"
+                onClick={() => handleResetChallenge(targetResetDay)}
+                disabled={isCalibrating}
+                className="gap-2 bg-brand-600 hover:bg-brand-700 font-bold"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {isCalibrating ? 'Calibrating...' : `Set Active Day to Day ${targetResetDay}`}
+              </Button>
+            </div>
+
+            <div className="space-y-1.5 pt-2">
+              <label className="text-xs font-bold text-slate-700 block">Quick Presets:</label>
+              <div className="flex flex-wrap gap-2">
+                {[1, 2, 5, 10, 15, 30, 45, 60, 90].map((d) => (
+                  <button
+                    key={d}
+                    onClick={() => {
+                      setTargetResetDay(d);
+                      handleResetChallenge(d);
+                    }}
+                    disabled={isCalibrating}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                      targetResetDay === d
+                        ? 'bg-brand-600 text-white border-brand-600 shadow-sm'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    Set to Day {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
 
         {/* Admin Registration Setting */}
         <Card variant="glass" className="space-y-6 bg-white p-6">
