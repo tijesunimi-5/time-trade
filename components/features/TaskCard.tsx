@@ -1,7 +1,5 @@
-'use client';
-
 import React from 'react';
-import { Check, Clock, ExternalLink, BookOpen, Headphones, MessageSquare, AlertCircle, Lock } from 'lucide-react';
+import { Check, Clock, ExternalLink, BookOpen, Headphones, MessageSquare, AlertCircle, Lock, Download, Video, FileText, Mic } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 
 export interface Task {
@@ -20,6 +18,8 @@ export interface Task {
   timestampRange?: string;
   discussionQuestions?: string;
   resourceUrl?: string;
+  fileUrl?: string;
+  fileName?: string;
   instructions?: string;
   isCompleted?: boolean;
   resource?: {
@@ -28,6 +28,9 @@ export interface Task {
     type: string;
     author?: string;
     url?: string;
+    fileUrl?: string;
+    fileName?: string;
+    accessType?: string;
   };
 }
 
@@ -74,6 +77,121 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     }
   };
 
+  const renderResourceActionButtons = () => {
+    const res = task.resource;
+    const directUrl = task.resourceUrl || res?.url;
+    const directFileUrl = task.fileUrl || res?.fileUrl;
+    const fileName = task.fileName || res?.fileName;
+
+    const API_HOST = (process.env.NEXT_PUBLIC_API_URL && process.env.NEXT_PUBLIC_API_URL.trim() !== '')
+      ? process.env.NEXT_PUBLIC_API_URL.replace('/api/v1', '')
+      : 'https://time-trade-backend.onrender.com';
+
+    const getFullUrl = (url?: string) => {
+      if (!url) return '#';
+      if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+      return `${API_HOST}${url}`;
+    };
+
+    if (!res && !directUrl && !directFileUrl) return null;
+
+    const resType = res?.type?.toUpperCase() || (directFileUrl ? 'BOOK' : 'EXTERNAL_LINK');
+
+    return (
+      <div className="mt-3 p-3.5 bg-gradient-to-r from-cyan-50/90 via-sky-50/70 to-blue-50/90 rounded-xl border border-cyan-200/90 space-y-2">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div className="flex items-center gap-2 text-xs font-extrabold text-cyan-950">
+            {resType === 'BOOK' || resType === 'DOCUMENT' ? (
+              <BookOpen className="w-4 h-4 text-cyan-700 shrink-0" />
+            ) : resType === 'VIDEO' ? (
+              <Video className="w-4 h-4 text-rose-600 shrink-0" />
+            ) : resType === 'PODCAST' ? (
+              <Headphones className="w-4 h-4 text-purple-600 shrink-0" />
+            ) : resType === 'SERMON' ? (
+              <Mic className="w-4 h-4 text-amber-600 shrink-0" />
+            ) : (
+              <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+            )}
+            <span className="line-clamp-1">{res?.title || task.title}</span>
+            {res?.author && <span className="text-cyan-700 font-medium">by {res.author}</span>}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Softcopy Download / Open File Button */}
+            {directFileUrl && (
+              <a
+                href={getFullUrl(directFileUrl)}
+                download={fileName || true}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-sm transition-all shrink-0"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Download Softcopy (PDF)</span>
+              </a>
+            )}
+
+            {/* External URL Action Button */}
+            {directUrl && (
+              <a
+                href={getFullUrl(directUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-black text-xs shadow-sm transition-all shrink-0 ${
+                  resType === 'VIDEO'
+                    ? 'bg-rose-600 hover:bg-rose-700 text-white'
+                    : resType === 'PODCAST'
+                    ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                    : resType === 'SERMON'
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white'
+                    : 'bg-brand-600 hover:bg-brand-700 text-white'
+                }`}
+              >
+                {resType === 'VIDEO' ? (
+                  <>
+                    <Video className="w-3.5 h-3.5" /> Watch Video
+                  </>
+                ) : resType === 'PODCAST' ? (
+                  <>
+                    <Headphones className="w-3.5 h-3.5" /> Listen to Podcast
+                  </>
+                ) : resType === 'SERMON' ? (
+                  <>
+                    <Mic className="w-3.5 h-3.5" /> Listen to Sermon
+                  </>
+                ) : resType === 'ARTICLE' ? (
+                  <>
+                    <FileText className="w-3.5 h-3.5" /> Read Article
+                  </>
+                ) : (
+                  <>
+                    <ExternalLink className="w-3.5 h-3.5" /> Open Link
+                  </>
+                )}
+              </a>
+            )}
+          </div>
+        </div>
+
+        {/* Page range / Timestamp range details */}
+        {(task.pageRange || task.timestampRange) && (
+          <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-cyan-900 font-medium">
+            {task.pageRange && (
+              <span className="bg-white px-2 py-0.5 rounded-md border border-cyan-300/80 font-mono">
+                📖 Pages: {task.pageRange}
+              </span>
+            )}
+            {task.timestampRange && (
+              <span className="bg-white px-2 py-0.5 rounded-md border border-cyan-300/80 font-mono">
+                ⏱️ Timestamp: {task.timestampRange}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div
       className={`rounded-2xl p-4 sm:p-5 border transition-all duration-300 relative ${
@@ -110,44 +228,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
           <p className="text-xs text-slate-600 leading-relaxed max-w-2xl">{task.description}</p>
 
-          {/* Curated Resource Section */}
-          {task.resource && (
-            <div className="mt-2 p-3 bg-cyan-50/60 rounded-xl border border-cyan-200/80 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-xs font-bold text-cyan-900">
-                  {task.resource.type === 'BOOK' ? (
-                    <BookOpen className="w-3.5 h-3.5 text-cyan-700" />
-                  ) : (
-                    <Headphones className="w-3.5 h-3.5 text-cyan-700" />
-                  )}
-                  <span>{task.resource.title}</span>
-                  {task.resource.author && <span className="text-cyan-600 font-normal">by {task.resource.author}</span>}
-                </div>
-                {task.resource.url && (
-                  <a
-                    href={task.resource.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[11px] font-extrabold text-cyan-800 hover:underline flex items-center gap-1 shrink-0"
-                  >
-                    Open Resource <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2 text-[11px] text-cyan-800 font-medium">
-                {task.pageRange && (
-                  <span className="bg-white/80 px-2 py-0.5 rounded border border-cyan-300/60 font-mono">
-                    Pages: {task.pageRange}
-                  </span>
-                )}
-                {task.timestampRange && (
-                  <span className="bg-white/80 px-2 py-0.5 rounded border border-cyan-300/60 font-mono">
-                    Timestamp: {task.timestampRange}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
+          {/* Interactive Media / Resource / Softcopy Download Actions */}
+          {renderResourceActionButtons()}
 
           {/* Reflection / Discussion Questions */}
           {task.discussionQuestions && (
@@ -165,17 +247,6 @@ export const TaskCard: React.FC<TaskCardProps> = ({
               <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
               <span>{task.instructions}</span>
             </div>
-          )}
-
-          {task.resourceUrl && !task.resource && (
-            <a
-              href={task.resourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-xs font-bold text-brand-600 hover:underline pt-1"
-            >
-              Access Resource <ExternalLink className="w-3 h-3" />
-            </a>
           )}
         </div>
 

@@ -9,7 +9,7 @@ import { Input } from '../../../components/ui/Input';
 import { api } from '../../../services/api';
 import { Loader } from '../../../components/ui/Loader';
 import { toast } from '../../../store/useToastStore';
-import { Plus, Trash2, Pencil, BookOpen, Layers, CheckSquare, FolderPlus, ArrowRight, Calendar, Clock } from 'lucide-react';
+import { Plus, Trash2, Pencil, BookOpen, Layers, CheckSquare, FolderPlus, ArrowRight, Calendar, Clock, Upload, FileText, Download, ExternalLink } from 'lucide-react';
 
 export default function AdminTasksPage() {
   const [activeTab, setActiveTab] = useState<'TREE' | 'TEMPLATES' | 'RESOURCES'>('TREE');
@@ -81,6 +81,10 @@ export default function AdminTasksPage() {
   const [resourceType, setResourceType] = useState('BOOK');
   const [resourceAuthor, setResourceAuthor] = useState('');
   const [resourceUrl, setResourceUrl] = useState('');
+  const [resourceFileUrl, setResourceFileUrl] = useState('');
+  const [resourceFileName, setResourceFileName] = useState('');
+  const [resourceAccessType, setResourceAccessType] = useState<'LINK' | 'FILE'>('LINK');
+  const [isUploadingFile, setIsUploadingFile] = useState(false);
 
   const loadAdminTree = async () => {
     try {
@@ -423,6 +427,9 @@ export default function AdminTasksPage() {
     setResourceType('BOOK');
     setResourceAuthor('');
     setResourceUrl('');
+    setResourceFileUrl('');
+    setResourceFileName('');
+    setResourceAccessType('LINK');
     setShowResourceModal(true);
   };
 
@@ -432,7 +439,38 @@ export default function AdminTasksPage() {
     setResourceType(res.type || 'BOOK');
     setResourceAuthor(res.author || '');
     setResourceUrl(res.url || '');
+    setResourceFileUrl(res.fileUrl || '');
+    setResourceFileName(res.fileName || '');
+    setResourceAccessType(res.accessType || (res.fileUrl ? 'FILE' : 'LINK'));
     setShowResourceModal(true);
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingFile(true);
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const fileData = reader.result as string;
+          const res = await api.uploadResourceFile({ fileName: file.name, fileData });
+          setResourceFileUrl(res.fileUrl);
+          setResourceFileName(res.fileName || file.name);
+          setResourceAccessType('FILE');
+          toast.success('Softcopy Uploaded!', `"${file.name}" uploaded successfully.`);
+        } catch (err: any) {
+          toast.error('Upload Failed', err.message || 'Failed to upload file');
+        } finally {
+          setIsUploadingFile(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err: any) {
+      toast.error('File Error', err.message || 'Unable to read file');
+      setIsUploadingFile(false);
+    }
   };
 
   const handleSaveResource = async (e: React.FormEvent) => {
@@ -444,6 +482,9 @@ export default function AdminTasksPage() {
         type: resourceType,
         author: resourceAuthor || undefined,
         url: resourceUrl || undefined,
+        fileUrl: resourceFileUrl || undefined,
+        fileName: resourceFileName || undefined,
+        accessType: resourceAccessType,
       });
       setShowResourceModal(false);
       toast.success(
@@ -1394,17 +1435,17 @@ export default function AdminTasksPage() {
       {/* Resource Modal (Create & Edit) */}
       {showResourceModal && (
         <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <Card variant="glass" className="max-w-md w-full p-6 space-y-4 bg-white">
+          <Card variant="glass" className="max-w-md w-full p-6 space-y-4 bg-white shadow-2xl">
             <h3 className="text-lg font-bold text-slate-900">
               {editingResourceId ? 'Edit Curated Resource' : 'Add Curated Resource'}
             </h3>
-            <form onSubmit={handleSaveResource} className="space-y-3">
+            <form onSubmit={handleSaveResource} className="space-y-4">
               <Input
                 label="Resource Title"
                 required
                 value={resourceTitle}
                 onChange={(e) => setResourceTitle(e.target.value)}
-                placeholder="e.g. Mindset by Carol Dweck"
+                placeholder="e.g. Mindset: The New Psychology of Success"
               />
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -1412,13 +1453,14 @@ export default function AdminTasksPage() {
                   <select
                     value={resourceType}
                     onChange={(e) => setResourceType(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none"
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none font-medium"
                   >
-                    <option value="BOOK">BOOK</option>
-                    <option value="PODCAST">PODCAST</option>
-                    <option value="SERMON">SERMON</option>
-                    <option value="VIDEO">VIDEO</option>
-                    <option value="ARTICLE">ARTICLE</option>
+                    <option value="BOOK">📖 BOOK</option>
+                    <option value="PODCAST">🎧 PODCAST</option>
+                    <option value="SERMON">🎙️ SERMON</option>
+                    <option value="VIDEO">▶️ VIDEO</option>
+                    <option value="ARTICLE">📄 ARTICLE</option>
+                    <option value="DOCUMENT">📚 DOCUMENT</option>
                   </select>
                 </div>
                 <Input
@@ -1428,17 +1470,102 @@ export default function AdminTasksPage() {
                   placeholder="e.g. Carol Dweck"
                 />
               </div>
-              <Input
-                label="Resource Link / URL (Optional)"
-                value={resourceUrl}
-                onChange={(e) => setResourceUrl(e.target.value)}
-                placeholder="https://..."
-              />
+
+              {/* Access Mode Selector: Link vs Softcopy File */}
+              <div className="space-y-2 pt-1 border-t border-slate-100">
+                <label className="text-xs font-bold text-slate-800 block">Access Mode & Softcopy Provision</label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setResourceAccessType('LINK')}
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      resourceAccessType === 'LINK'
+                        ? 'bg-brand-50 border-brand-500 text-brand-700 shadow-sm'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-brand-600" /> External Link (URL)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setResourceAccessType('FILE')}
+                    className={`p-2.5 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      resourceAccessType === 'FILE'
+                        ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-sm'
+                        : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                    }`}
+                  >
+                    <Upload className="w-3.5 h-3.5 text-emerald-600" /> Upload Softcopy File
+                  </button>
+                </div>
+              </div>
+
+              {resourceAccessType === 'FILE' ? (
+                <div className="space-y-3 bg-emerald-50/60 p-3.5 rounded-xl border border-emerald-200">
+                  <div className="space-y-1">
+                    <label className="text-xs font-bold text-emerald-900 block">
+                      Upload Softcopy (PDF, EPUB, Doc, Audio)
+                    </label>
+                    <p className="text-[11px] text-emerald-700">
+                      Upload the softcopy book or study material so participants can download it directly from their tasks.
+                    </p>
+                  </div>
+
+                  <input
+                    type="file"
+                    onChange={handleFileUpload}
+                    accept=".pdf,.epub,.doc,.docx,.mp3,.mp4,.txt,.zip"
+                    disabled={isUploadingFile}
+                    className="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer"
+                  />
+
+                  {isUploadingFile && (
+                    <p className="text-xs text-emerald-800 font-bold animate-pulse">Uploading file to server...</p>
+                  )}
+
+                  {resourceFileUrl && (
+                    <div className="p-2 bg-white rounded-lg border border-emerald-300 flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-1.5 text-emerald-950 font-bold">
+                        <Download className="w-3.5 h-3.5 text-emerald-600" />
+                        <span className="truncate max-w-[200px]">{resourceFileName || 'Uploaded Softcopy'}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResourceFileUrl('');
+                          setResourceFileName('');
+                        }}
+                        className="text-[10px] text-red-600 font-bold hover:underline"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+
+                  <Input
+                    label="Or Softcopy Direct URL (Optional)"
+                    value={resourceFileUrl}
+                    onChange={(e) => {
+                      setResourceFileUrl(e.target.value);
+                      if (!resourceFileName) setResourceFileName('Softcopy Download');
+                    }}
+                    placeholder="https://drive.google.com/... or https://..."
+                  />
+                </div>
+              ) : (
+                <Input
+                  label="Resource Web Link / URL"
+                  value={resourceUrl}
+                  onChange={(e) => setResourceUrl(e.target.value)}
+                  placeholder="e.g. https://youtube.com/watch?... or https://..."
+                />
+              )}
+
               <div className="flex justify-end gap-2 pt-2">
                 <Button type="button" variant="glass" size="sm" onClick={() => setShowResourceModal(false)}>
                   Cancel
                 </Button>
-                <Button type="submit" variant="primary" size="sm">
+                <Button type="submit" variant="primary" size="sm" disabled={isUploadingFile}>
                   {editingResourceId ? 'Save Changes' : 'Save Resource'}
                 </Button>
               </div>

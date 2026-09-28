@@ -109,6 +109,8 @@ export const api = {
   deleteDay: (id: string) => fetcher(`/programme/admin/day/${id}`, { method: 'DELETE' }),
   saveTaskTemplate: (template: any) => fetcher('/programme/admin/template', { method: 'POST', body: JSON.stringify(template) }),
   deleteTaskTemplate: (id: string) => fetcher(`/programme/admin/template/${id}`, { method: 'DELETE' }),
+  uploadResourceFile: (body: { fileName: string; fileData: string }) =>
+    fetcher('/programme/admin/upload-resource', { method: 'POST', body: JSON.stringify(body) }),
   saveResource: (resource: any) => fetcher('/programme/admin/resource', { method: 'POST', body: JSON.stringify(resource) }),
   deleteResource: (id: string) => fetcher(`/programme/admin/resource/${id}`, { method: 'DELETE' }),
   assignTaskToDay: (task: any) => fetcher('/programme/admin/assign-task', { method: 'POST', body: JSON.stringify(task) }),
