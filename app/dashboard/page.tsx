@@ -222,6 +222,53 @@ export default function ParticipantDashboard() {
           </div>
         )}
 
+        {/* Smart Leaderboard Motivational & Competitive Banner */}
+        {dayData?.smartMotivationalBanner && (
+          <div
+            className={`p-5 sm:p-6 rounded-2xl border-2 transition-all shadow-md relative overflow-hidden flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+              dayData.smartMotivationalBanner.mood === 'CHAMPION'
+                ? 'bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 border-amber-300 text-white shadow-amber-500/20'
+                : dayData.smartMotivationalBanner.mood === 'CHALLENGE'
+                ? 'bg-gradient-to-r from-rose-600 via-orange-600 to-amber-600 border-rose-400 text-white shadow-rose-600/20'
+                : dayData.smartMotivationalBanner.mood === 'PODIUM'
+                ? 'bg-gradient-to-r from-sky-600 via-indigo-600 to-blue-700 border-sky-300 text-white shadow-sky-500/20'
+                : dayData.smartMotivationalBanner.mood === 'SUCCESS'
+                ? 'bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 border-emerald-300 text-white'
+                : dayData.smartMotivationalBanner.mood === 'SAVAGE_WARN'
+                ? 'bg-gradient-to-r from-amber-600 via-orange-600 to-red-600 border-amber-300 text-white'
+                : 'bg-gradient-to-r from-brand-600 to-indigo-700 border-brand-300 text-white'
+            }`}
+          >
+            <div className="space-y-1.5 z-10 max-w-3xl">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[10px] font-black uppercase tracking-widest bg-white/20 px-2.5 py-0.5 rounded border border-white/30 backdrop-blur">
+                  {dayData.smartMotivationalBanner.tag || 'LEADERBOARD INTEL'}
+                </span>
+                <span className="text-xs font-bold text-white/90 flex items-center gap-1">
+                  <Trophy className="w-3.5 h-3.5 text-yellow-300 fill-yellow-300" />
+                  Cohort Live Intel
+                </span>
+              </div>
+              <h3 className="text-base sm:text-lg font-black leading-snug">
+                {dayData.smartMotivationalBanner.title}
+              </h3>
+              <p className="text-xs sm:text-sm text-white/95 leading-relaxed font-medium">
+                {dayData.smartMotivationalBanner.message}
+              </p>
+            </div>
+
+            <div className="shrink-0 z-10">
+              <a
+                href="/dashboard/leaderboard"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white text-slate-950 font-black text-xs shadow-lg hover:bg-slate-100 transition-transform active:scale-95"
+              >
+                <Trophy className="w-4 h-4 text-amber-500 fill-amber-500" />
+                View Leaderboard &rarr;
+              </a>
+            </div>
+          </div>
+        )}
+
         {/* Current Week Anchor Resource Spotlight */}
         {programmeInfo?.anchorResource && (
           <div className="bg-gradient-to-r from-cyan-900 via-blue-900 to-indigo-900 text-white p-4 sm:p-5 rounded-2xl shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">

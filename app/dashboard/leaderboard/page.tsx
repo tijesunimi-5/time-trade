@@ -19,6 +19,8 @@ const PERIOD_TABS = [
 export default function LeaderboardPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('TODAY');
   const [rankings, setRankings] = useState<any[]>([]);
+  const [systemFeedComments, setSystemFeedComments] = useState<any[]>([]);
+  const [userRanking, setUserRanking] = useState<any>(null);
   const [isLive, setIsLive] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -27,6 +29,8 @@ export default function LeaderboardPage() {
     api.getLeaderboard(period)
       .then((res) => {
         setRankings(res.rankings || []);
+        setSystemFeedComments(res.systemFeedComments || []);
+        setUserRanking(res.userRanking || null);
         setIsLive(res.isLive ?? true);
       })
       .catch((err) => console.error('Failed to load leaderboard:', err))
@@ -91,6 +95,50 @@ export default function LeaderboardPage() {
                 Activities have not been published by Admin yet. Rankings will populate live as tasks are assigned and participants begin submitting their daily completions.
               </p>
             </div>
+          </div>
+        )}
+
+        {/* Live Savage & Inspiring Cohort Commentary Feed */}
+        {systemFeedComments && systemFeedComments.length > 0 && (
+          <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-4 sm:p-5 rounded-2xl shadow-md space-y-2 border border-indigo-900/60">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-black uppercase tracking-widest bg-amber-500 text-slate-950 px-2 py-0.5 rounded font-mono">
+                LIVE COHORT FEED
+              </span>
+              <span className="text-xs text-indigo-300 font-bold">Witty & Savage System Commentary</span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {systemFeedComments.map((c: any, i: number) => (
+                <div key={i} className="flex items-start gap-2.5 text-xs text-slate-200 bg-white/5 p-2.5 rounded-xl border border-white/10">
+                  <span className="text-base shrink-0 leading-none">{c.icon}</span>
+                  <span className="font-medium leading-relaxed">{c.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Personal Rank & Smart Motivational Banner */}
+        {userRanking?.smartMessage && (
+          <div className={`p-5 rounded-2xl border-2 shadow-sm space-y-1.5 ${
+            userRanking.smartMessage.mood === 'CHAMPION'
+              ? 'bg-amber-50 border-amber-300 text-amber-950'
+              : userRanking.smartMessage.mood === 'CHALLENGE'
+              ? 'bg-rose-50 border-rose-300 text-rose-950'
+              : userRanking.smartMessage.mood === 'PODIUM'
+              ? 'bg-sky-50 border-sky-300 text-sky-950'
+              : 'bg-indigo-50 border-indigo-200 text-indigo-950'
+          }`}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded bg-white/80 border border-current">
+                {userRanking.smartMessage.tag}
+              </span>
+              <span className="text-xs font-black">
+                Your Rank Today: <strong className="text-brand-700">#{userRanking.rank}</strong> ({userRanking.credits} pts)
+              </span>
+            </div>
+            <h4 className="text-sm font-black text-slate-900">{userRanking.smartMessage.title}</h4>
+            <p className="text-xs text-slate-700 font-medium leading-relaxed">{userRanking.smartMessage.message}</p>
           </div>
         )}
 
