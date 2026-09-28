@@ -32,6 +32,7 @@ export interface Task {
     fileUrl?: string;
     fileName?: string;
     accessType?: string;
+    contentNotes?: string;
   };
 }
 
@@ -97,6 +98,40 @@ export const TaskCard: React.FC<TaskCardProps> = ({
     if (!res && !directUrl && !directFileUrl) return null;
 
     const resType = res?.type?.toUpperCase() || (directFileUrl ? 'BOOK' : 'EXTERNAL_LINK');
+    const isBible = resType === 'BIBLE' || task.category === 'BIBLE';
+
+    if (isBible) {
+      return (
+        <div className="mt-3 p-4 bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 rounded-xl text-white shadow-md space-y-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-amber-100 bg-black/20 px-2 py-0.5 rounded max-w-fit">
+                <span>✝️ HOLY BIBLE READING PASSAGE</span>
+              </div>
+              <h4 className="text-sm sm:text-base font-black text-white">
+                {task.pageRange || res?.title || task.title}
+              </h4>
+              <p className="text-xs text-amber-100 font-medium">
+                {res?.contentNotes || 'Daily Scripture Study Portion'}
+              </p>
+            </div>
+
+            {directUrl && (
+              <a
+                href={getFullUrl(directUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-amber-950 font-black text-xs shadow-md hover:bg-amber-50 transition-all shrink-0"
+              >
+                <BookOpen className="w-4 h-4 text-amber-600" />
+                <span>Open Passage (Bible.com)</span>
+                <ExternalLink className="w-3.5 h-3.5 text-amber-500" />
+              </a>
+            )}
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="mt-3 p-3.5 bg-gradient-to-r from-cyan-50/90 via-sky-50/70 to-blue-50/90 rounded-xl border border-cyan-200/90 space-y-2">
@@ -178,8 +213,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({
         {(task.pageRange || task.timestampRange) && (
           <div className="flex flex-wrap items-center gap-2 pt-1 text-[11px] text-cyan-900 font-medium">
             {task.pageRange && (
-              <span className="bg-white px-2 py-0.5 rounded-md border border-cyan-300/80 font-mono">
-                📖 Pages: {task.pageRange}
+              <span className="bg-white px-2 py-0.5 rounded-md border border-cyan-300/80 font-mono font-bold">
+                📖 Today's Reading Goal: {task.pageRange}
               </span>
             )}
             {task.timestampRange && (

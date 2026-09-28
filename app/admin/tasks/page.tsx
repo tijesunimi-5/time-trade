@@ -86,6 +86,15 @@ export default function AdminTasksPage() {
   const [resourceAccessType, setResourceAccessType] = useState<'LINK' | 'FILE'>('LINK');
   const [isUploadingFile, setIsUploadingFile] = useState(false);
 
+  // Resource Auto-Increment Reading Plan Form State
+  const [resourceIsAutoIncrement, setResourceIsAutoIncrement] = useState(false);
+  const [resourceStartUnit, setResourceStartUnit] = useState<number>(1);
+  const [resourceUnitsPerDay, setResourceUnitsPerDay] = useState<number>(3);
+  const [resourceUnitType, setResourceUnitType] = useState<'CHAPTERS' | 'PAGES'>('CHAPTERS');
+  const [resourceBookName, setResourceBookName] = useState('');
+  const [resourceBibleVersion, setResourceBibleVersion] = useState('KJV');
+  const [resourceBibleUrlTemplate, setResourceBibleUrlTemplate] = useState('');
+
   const loadAdminTree = async () => {
     try {
       setIsLoading(true);
@@ -424,12 +433,19 @@ export default function AdminTasksPage() {
   const handleOpenCreateResource = () => {
     setEditingResourceId(null);
     setResourceTitle('');
-    setResourceType('BOOK');
+    setResourceType('BIBLE');
     setResourceAuthor('');
-    setResourceUrl('');
+    setResourceUrl('https://bible.com/bible/1/mat.2.1.kjv');
     setResourceFileUrl('');
     setResourceFileName('');
     setResourceAccessType('LINK');
+    setResourceIsAutoIncrement(true);
+    setResourceStartUnit(1);
+    setResourceUnitsPerDay(3);
+    setResourceUnitType('CHAPTERS');
+    setResourceBookName('Matthew');
+    setResourceBibleVersion('KJV');
+    setResourceBibleUrlTemplate('https://bible.com/bible/1/mat.2.1.kjv');
     setShowResourceModal(true);
   };
 
@@ -442,6 +458,13 @@ export default function AdminTasksPage() {
     setResourceFileUrl(res.fileUrl || '');
     setResourceFileName(res.fileName || '');
     setResourceAccessType(res.accessType || (res.fileUrl ? 'FILE' : 'LINK'));
+    setResourceIsAutoIncrement(!!res.isAutoIncrement || res.type === 'BIBLE');
+    setResourceStartUnit(res.startUnit ?? 1);
+    setResourceUnitsPerDay(res.unitsPerDay ?? 3);
+    setResourceUnitType(res.unitType || (res.type === 'BIBLE' ? 'CHAPTERS' : 'PAGES'));
+    setResourceBookName(res.bookName || res.title || '');
+    setResourceBibleVersion(res.bibleVersion || 'KJV');
+    setResourceBibleUrlTemplate(res.bibleUrlTemplate || res.url || '');
     setShowResourceModal(true);
   };
 
@@ -485,6 +508,13 @@ export default function AdminTasksPage() {
         fileUrl: resourceFileUrl || undefined,
         fileName: resourceFileName || undefined,
         accessType: resourceAccessType,
+        isAutoIncrement: resourceIsAutoIncrement || resourceType === 'BIBLE',
+        startUnit: Number(resourceStartUnit) || 1,
+        unitsPerDay: Number(resourceUnitsPerDay) || 3,
+        unitType: resourceUnitType,
+        bookName: resourceBookName || resourceTitle || undefined,
+        bibleVersion: resourceBibleVersion || 'KJV',
+        bibleUrlTemplate: resourceBibleUrlTemplate || resourceUrl || undefined,
       });
       setShowResourceModal(false);
       toast.success(
@@ -1455,6 +1485,7 @@ export default function AdminTasksPage() {
                     onChange={(e) => setResourceType(e.target.value)}
                     className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none font-medium"
                   >
+                    <option value="BIBLE">✝️ BIBLE STUDY</option>
                     <option value="BOOK">📖 BOOK</option>
                     <option value="PODCAST">🎧 PODCAST</option>
                     <option value="SERMON">🎙️ SERMON</option>
@@ -1467,8 +1498,92 @@ export default function AdminTasksPage() {
                   label="Author / Speaker"
                   value={resourceAuthor}
                   onChange={(e) => setResourceAuthor(e.target.value)}
-                  placeholder="e.g. Carol Dweck"
+                  placeholder="e.g. Carol Dweck or Apostle Paul"
                 />
+              </div>
+
+              {/* Auto-Increment Reading Plan Configuration */}
+              <div className="p-3.5 bg-amber-50/80 rounded-xl border border-amber-200 space-y-3">
+                <div
+                  onClick={() => setResourceIsAutoIncrement(!resourceIsAutoIncrement)}
+                  className="flex items-center justify-between cursor-pointer"
+                >
+                  <div>
+                    <span className="text-xs font-bold text-amber-950 block">
+                      Auto-Increment Reading Plan (Daily Progression)
+                    </span>
+                    <span className="text-[11px] text-amber-800 font-normal">
+                      Automatically update chapters/pages every day based on active challenge day!
+                    </span>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={resourceIsAutoIncrement || resourceType === 'BIBLE'}
+                    onChange={(e) => setResourceIsAutoIncrement(e.target.checked)}
+                    className="w-4 h-4 text-amber-600 rounded"
+                  />
+                </div>
+
+                {(resourceIsAutoIncrement || resourceType === 'BIBLE') && (
+                  <div className="space-y-3 pt-2 border-t border-amber-200/80">
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        label="Book / Bible Name"
+                        value={resourceBookName}
+                        onChange={(e) => setResourceBookName(e.target.value)}
+                        placeholder="e.g. Matthew or Mindset"
+                      />
+                      <div>
+                        <label className="text-xs font-bold text-amber-950 block mb-1">Unit Type</label>
+                        <select
+                          value={resourceUnitType}
+                          onChange={(e) => setResourceUnitType(e.target.value as any)}
+                          className="w-full px-3 py-2 rounded-xl border border-amber-300 text-xs bg-white font-medium"
+                        >
+                          <option value="CHAPTERS">Chapters (Bible / Study)</option>
+                          <option value="PAGES">Pages (Book Reading)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        label="Starting Chapter/Page"
+                        type="number"
+                        min={1}
+                        value={resourceStartUnit}
+                        onChange={(e) => setResourceStartUnit(parseInt(e.target.value, 10) || 1)}
+                        placeholder="e.g. 1 or 5"
+                      />
+                      <Input
+                        label="Units Per Day"
+                        type="number"
+                        min={1}
+                        value={resourceUnitsPerDay}
+                        onChange={(e) => setResourceUnitsPerDay(parseInt(e.target.value, 10) || 3)}
+                        placeholder="e.g. 3 or 10"
+                      />
+                    </div>
+
+                    {resourceType === 'BIBLE' && (
+                      <Input
+                        label="Bible Passage Share Link / YouVersion URL"
+                        value={resourceBibleUrlTemplate}
+                        onChange={(e) => {
+                          setResourceBibleUrlTemplate(e.target.value);
+                          setResourceUrl(e.target.value);
+                        }}
+                        placeholder="https://bible.com/bible/1/mat.2.1.kjv"
+                      />
+                    )}
+
+                    <div className="p-2.5 bg-white rounded-lg border border-amber-300 text-[11px] text-amber-900 space-y-1">
+                      <span className="font-bold text-amber-950 block">💡 Daily Auto-Progression Preview:</span>
+                      <div>Day 1: {resourceBookName || 'Matthew'} {resourceStartUnit}–{resourceStartUnit + resourceUnitsPerDay - 1}</div>
+                      <div>Day 2: {resourceBookName || 'Matthew'} {resourceStartUnit + resourceUnitsPerDay}–{resourceStartUnit + resourceUnitsPerDay * 2 - 1}</div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Access Mode Selector: Link vs Softcopy File */}
