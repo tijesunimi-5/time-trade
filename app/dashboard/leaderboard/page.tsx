@@ -6,6 +6,7 @@ import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Loader } from '../../../components/ui/Loader';
 import { api } from '../../../services/api';
+import { UserInitialsAvatar } from '../../../components/ui/UserInitialsAvatar';
 import { Trophy, Flame, Clock, Award, Zap, Info } from 'lucide-react';
 
 const PERIOD_TABS = [
@@ -208,13 +209,11 @@ export default function LeaderboardPage() {
                         </td>
                         <td className="p-3 sm:p-4 font-bold text-slate-900">
                           <div className="flex items-center gap-3">
-                            <img
-                              src={
-                                r.avatarUrl ||
-                                'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
-                              }
-                              alt={r.fullName}
-                              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-brand-200 object-cover shadow-xs"
+                            <UserInitialsAvatar
+                              fullName={r.fullName}
+                              avatarUrl={r.avatarUrl}
+                              size="md"
+                              allNamesInList={rankings.map((item) => item.fullName)}
                             />
                             <span className="truncate max-w-[140px] sm:max-w-none font-extrabold text-slate-900">
                               {r.fullName}

@@ -6,6 +6,7 @@ import { Card } from '../../../components/ui/Card';
 import { Badge } from '../../../components/ui/Badge';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
+import { UserInitialsAvatar } from '../../../components/ui/UserInitialsAvatar';
 import { api } from '../../../services/api';
 import { toast } from '../../../store/useToastStore';
 import {
@@ -22,6 +23,9 @@ import {
   UserPlus,
   Pencil,
   Check,
+  Flame,
+  ShieldCheck,
+  Zap,
 } from 'lucide-react';
 
 interface Participant {
@@ -43,6 +47,8 @@ interface Participant {
     currentStreak: number;
     totalCompleted: number;
     overallPercentage: number;
+    isProtected?: boolean;
+    bonusStreak?: number;
   };
 }
 
@@ -53,10 +59,14 @@ export default function AdminParticipantsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'PARTICIPANTS' | 'ADMINS' | 'ALL'>('PARTICIPANTS');
 
-  // Drawer & Role Modal States
+  // Drawer, Role Modal & Streak Protection Modal States
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
   const [editingRolesUser, setEditingRolesUser] = useState<Participant | null>(null);
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+
+  const [editingStreakUser, setEditingStreakUser] = useState<Participant | null>(null);
+  const [streakIsProtected, setStreakIsProtected] = useState<boolean>(false);
+  const [streakBonusDays, setStreakBonusDays] = useState<number>(0);
 
   useEffect(() => {
     fetchData();
@@ -158,6 +168,28 @@ export default function AdminParticipantsPage() {
     }
   };
 
+  const handleOpenStreakModal = (user: Participant) => {
+    setEditingStreakUser(user);
+    setStreakIsProtected(user.streak?.isProtected || false);
+    setStreakBonusDays(user.streak?.bonusStreak || 0);
+  };
+
+  const handleSaveStreakRepair = async () => {
+    if (!editingStreakUser) return;
+    try {
+      await api.repairParticipantStreak({
+        participantId: editingStreakUser.id,
+        isProtected: streakIsProtected,
+        bonusStreak: Number(streakBonusDays) || 0,
+      });
+      toast.success('Streak Repaired', `Streak protection and repair updated for "${editingStreakUser.fullName}".`);
+      setEditingStreakUser(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error('Streak Repair Failed', err.message || 'Unable to update participant streak');
+    }
+  };
+
   const participantCount = participants.filter((p) => !isUserAdminOrExco(p)).length;
   const adminCount = participants.filter((p) => isUserAdminOrExco(p)).length;
 
@@ -242,6 +274,7 @@ export default function AdminParticipantsPage() {
                     <th className="py-3.5 px-4 sm:px-6">Member Name</th>
                     <th className="py-3.5 px-4">Contact Details</th>
                     <th className="py-3.5 px-4">Assigned Roles</th>
+                    <th className="py-3.5 px-4">Streak & Protection</th>
                     <th className="py-3.5 px-4">Registration Date</th>
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
@@ -252,15 +285,24 @@ export default function AdminParticipantsPage() {
                     return (
                       <tr key={p.id} className="hover:bg-slate-50/80 transition-colors">
                         <td className="py-3.5 px-4 sm:px-6 font-bold text-slate-900">
-                          <div className="flex items-center gap-2">
-                            <span>{p.fullName}</span>
-                            {isAdmin && (
-                              <span className="bg-purple-100 text-purple-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded">
-                                EXCO / ADMIN
-                              </span>
-                            )}
+                          <div className="flex items-center gap-3">
+                            <UserInitialsAvatar
+                              fullName={p.fullName}
+                              allNamesInList={participants.map((item) => item.fullName)}
+                              size="sm"
+                            />
+                            <div>
+                              <div className="flex items-center gap-1.5">
+                                <span>{p.fullName}</span>
+                                {isAdmin && (
+                                  <span className="bg-purple-100 text-purple-800 text-[9px] font-extrabold px-1.5 py-0.5 rounded">
+                                    EXCO / ADMIN
+                                  </span>
+                                )}
+                              </div>
+                              <div className="text-[11px] text-slate-500 font-normal">{p.email}</div>
+                            </div>
                           </div>
-                          <div className="text-[11px] text-slate-500 font-normal">{p.email}</div>
                         </td>
 
                         <td className="py-3.5 px-4 text-slate-600 font-medium">
@@ -291,19 +333,45 @@ export default function AdminParticipantsPage() {
                           </div>
                         </td>
 
+                        <td className="py-3.5 px-4">
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 font-extrabold text-xs">
+                              <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+                              {p.streak?.currentStreak || 0} Days
+                            </span>
+                            {p.streak?.isProtected && (
+                              <span
+                                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-extrabold bg-emerald-100 text-emerald-800 border border-emerald-300"
+                                title="Streak Protection Active (Freeze on 2+ missed days)"
+                              >
+                                <ShieldCheck className="w-3 h-3 text-emerald-600" /> Protected
+                              </span>
+                            )}
+                            <button
+                              onClick={() => handleOpenStreakModal(p)}
+                              title="Protect / Repair Streak"
+                              className="p-1 rounded text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                            >
+                              <Zap className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+
                         <td className="py-3.5 px-4 text-slate-500">
                           {new Date(p.createdAt).toLocaleDateString()}
                         </td>
 
                         <td className="py-3.5 px-4 text-right">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => setSelectedParticipant(p)}
-                            className="text-xs py-1 px-2.5"
-                          >
-                            <Eye className="w-3.5 h-3.5 mr-1" /> View Answers
-                          </Button>
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => setSelectedParticipant(p)}
+                              className="text-xs py-1 px-2.5"
+                            >
+                              <Eye className="w-3.5 h-3.5 mr-1" /> View Answers
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -445,6 +513,87 @@ export default function AdminParticipantsPage() {
                 </Button>
                 <Button variant="primary" size="sm" onClick={handleSaveRoles}>
                   Save User Roles
+                </Button>
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Streak Protection & Repair Modal */}
+        {editingStreakUser && (
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+            <Card variant="glass" className="max-w-md w-full p-6 space-y-4 bg-white">
+              <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center font-bold">
+                  <Flame className="w-5 h-5 fill-amber-500" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    Streak Protection & Repair
+                  </h3>
+                  <p className="text-xs text-slate-500">{editingStreakUser.fullName}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 py-2">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-slate-500 font-medium">Calculated Streak:</span>
+                    <span className="font-extrabold text-amber-600 ml-1.5">
+                      🔥 {editingStreakUser.streak?.currentStreak || 0} Days
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-slate-500 font-medium">Completed Tasks:</span>
+                    <span className="font-bold text-slate-900 ml-1.5">
+                      {editingStreakUser.streak?.totalCompleted || 0}
+                    </span>
+                  </div>
+                </div>
+
+                <div
+                  onClick={() => setStreakIsProtected(!streakIsProtected)}
+                  className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+                    streakIsProtected
+                      ? 'border-emerald-500 bg-emerald-50/50 text-emerald-950'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <ShieldCheck className={`w-5 h-5 shrink-0 mt-0.5 ${streakIsProtected ? 'text-emerald-600' : 'text-slate-400'}`} />
+                  <div className="space-y-0.5">
+                    <div className="text-xs font-bold flex items-center justify-between">
+                      <span>Enable Admin Streak Protection</span>
+                      {streakIsProtected && <Check className="w-4 h-4 text-emerald-600" />}
+                    </div>
+                    <p className="text-[11px] text-slate-500 font-normal leading-relaxed">
+                      Prevents current streak from resetting to 0 even if participant misses 2 or more consecutive days.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-extrabold text-slate-700">
+                    Bonus Streak Days (Manual Adjustment)
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={streakBonusDays}
+                    onChange={(e) => setStreakBonusDays(Math.max(0, parseInt(e.target.value) || 0))}
+                  />
+                  <p className="text-[11px] text-slate-400">
+                    Add extra streak days to compensate or assist user without altering past task completion records.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-100">
+                <Button variant="glass" size="sm" onClick={() => setEditingStreakUser(null)}>
+                  Cancel
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleSaveStreakRepair}>
+                  Save & Repair Streak
                 </Button>
               </div>
             </Card>

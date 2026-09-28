@@ -143,6 +143,8 @@ export const api = {
   getSettings: () => fetcher('/admin/settings'),
   updateSettings: (settings: { isAdminRegistrationActive?: boolean; pillars?: string[] | string }) =>
     fetcher('/admin/settings', { method: 'PUT', body: JSON.stringify(settings) }),
+  repairParticipantStreak: (body: { participantId: string; isProtected: boolean; bonusStreak?: number }) =>
+    fetcher('/admin/streak/repair', { method: 'POST', body: JSON.stringify(body) }),
 
   // Feedback
   submitFeedback: (body: { category: string; subject: string; message: string }) =>
