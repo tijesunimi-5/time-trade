@@ -24,13 +24,30 @@ interface TaskReorderListProps {
   onDeleteTask: (taskId: string, title: string) => void;
 }
 
+const getTimeOfDayPriority = (tod?: string | null): number => {
+  if (!tod) return 2;
+  const upper = tod.trim().toUpperCase();
+  if (upper === 'MORNING') return 1;
+  if (upper === 'NIGHT' || upper === 'EVENING') return 3;
+  return 2;
+};
+
+const sortTaskItems = (items: TaskItem[]): TaskItem[] => {
+  return [...items].sort((a, b) => {
+    const pA = getTimeOfDayPriority(a.timeOfDay);
+    const pB = getTimeOfDayPriority(b.timeOfDay);
+    if (pA !== pB) return pA - pB;
+    return (a.displayOrder || 0) - (b.displayOrder || 0);
+  });
+};
+
 export const TaskReorderList: React.FC<TaskReorderListProps> = ({
   tasks: initialTasks,
   onReorderSuccess,
   onEditTask,
   onDeleteTask,
 }) => {
-  const [tasks, setTasks] = useState<TaskItem[]>(initialTasks);
+  const [tasks, setTasks] = useState<TaskItem[]>(() => sortTaskItems(initialTasks));
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -40,7 +57,7 @@ export const TaskReorderList: React.FC<TaskReorderListProps> = ({
   const touchDraggedIdx = useRef<number | null>(null);
 
   useEffect(() => {
-    setTasks(initialTasks);
+    setTasks(sortTaskItems(initialTasks));
   }, [initialTasks]);
 
   const saveNewOrder = async (updatedList: TaskItem[]) => {
@@ -204,6 +221,15 @@ export const TaskReorderList: React.FC<TaskReorderListProps> = ({
                   <span className="text-[9px] font-bold text-slate-500 bg-slate-200/80 px-1.5 py-0.5 rounded flex items-center gap-0.5 shrink-0">
                     <Clock className="w-2.5 h-2.5 text-slate-500" />
                     {task.durationMinutes}m
+                  </span>
+                )}
+                {task.timeOfDay && (
+                  <span className="text-[9px] font-extrabold uppercase bg-slate-200/90 text-slate-700 px-1.5 py-0.5 rounded border border-slate-300/60 shrink-0">
+                    {task.timeOfDay === 'MORNING'
+                      ? '🌅 MORNING'
+                      : task.timeOfDay === 'NIGHT' || task.timeOfDay === 'EVENING'
+                      ? '🌙 NIGHT'
+                      : '☀️ ANYTIME'}
                   </span>
                 )}
                 {task.isNonNegotiable && (
