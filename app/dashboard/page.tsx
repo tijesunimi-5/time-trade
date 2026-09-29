@@ -494,6 +494,29 @@ export default function ParticipantDashboard() {
               ))}
             </div>
           )}
+
+          {/* Day Polls attached to this Day */}
+          {dayData?.dayPolls && dayData.dayPolls.length > 0 && (
+            <div className="space-y-3 pt-3 border-t border-slate-200/80">
+              <div className="flex items-center gap-2">
+                <BarChart2 className="w-4 h-4 text-cyan-600" />
+                <h3 className="text-sm font-black text-slate-900">Day {dayData.dayNumber} Quick Poll</h3>
+              </div>
+              {dayData.dayPolls.map((poll: any) => (
+                <PollCard
+                  key={poll.id}
+                  poll={poll}
+                  variant="standalone"
+                  onVoteSuccess={(updated) => {
+                    setDayData((prev: any) => ({
+                      ...prev,
+                      dayPolls: prev?.dayPolls?.map((p: any) => (p.id === updated.id ? updated : p)) || [],
+                    }));
+                  }}
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

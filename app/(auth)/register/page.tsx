@@ -30,9 +30,11 @@ export default function RegisterPage() {
     setIsFetchingFields(true);
     api.getDynamicFormFields()
       .then((res) => {
-        if (res.fields) {
+        if (res.isPublished && res.fields) {
           const activeFields = res.fields.filter((f: DynamicField) => f.isActive);
           setFields(activeFields);
+        } else {
+          setFields([]);
         }
       })
       .catch((err) => console.error('Failed to fetch dynamic fields:', err))

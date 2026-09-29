@@ -11,6 +11,7 @@ import { Trophy, Flame, Clock, Award, Zap, Info } from 'lucide-react';
 
 const PERIOD_TABS = [
   { id: 'TODAY', label: 'Today' },
+  { id: 'YESTERDAY', label: 'Yesterday' },
   { id: 'THIS_WEEK', label: 'This Week' },
   { id: 'LAST_WEEK', label: 'Last Week' },
   { id: 'THIS_MONTH', label: 'This Month' },

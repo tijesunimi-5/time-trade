@@ -22,7 +22,8 @@ export default function AdminPollsPage() {
   const [question, setQuestion] = useState('');
   const [description, setDescription] = useState('');
   const [allowMultiple, setAllowMultiple] = useState(false);
-  const [scopeType, setScopeType] = useState<'STANDALONE' | 'TASK'>('STANDALONE');
+  const [scopeType, setScopeType] = useState<'STANDALONE' | 'DAY' | 'TASK'>('STANDALONE');
+  const [selectedDayNumber, setSelectedDayNumber] = useState<number>(1);
   const [showAsPopup, setShowAsPopup] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState('');
   const [options, setOptions] = useState<any[]>([
@@ -37,13 +38,17 @@ export default function AdminPollsPage() {
   const loadAdminPolls = async () => {
     try {
       setIsLoading(true);
-      const [pollsRes, tasksRes] = await Promise.all([
+      const [pollsRes, tasksRes, progRes] = await Promise.all([
         api.getAdminPolls().catch(() => ({ polls: [] })),
         api.getTodayTasks().catch(() => ({ tasks: [] })),
+        api.getCurrentProgramme().catch(() => null),
       ]);
 
       setPolls(pollsRes?.polls || []);
       setTasks(tasksRes?.tasks || []);
+      if (progRes?.currentDayNumber) {
+        setSelectedDayNumber(progRes.currentDayNumber);
+      }
     } catch (err) {
       console.error('Failed to load admin polls:', err);
     } finally {
@@ -75,7 +80,15 @@ export default function AdminPollsPage() {
     setQuestion(poll.question || '');
     setDescription(poll.description || '');
     setAllowMultiple(!!poll.allowMultiple);
-    setScopeType(poll.taskId ? 'TASK' : 'STANDALONE');
+    if (poll.dayNumber) {
+      setScopeType('DAY');
+      setSelectedDayNumber(poll.dayNumber);
+    } else if (poll.taskId) {
+      setScopeType('TASK');
+      setSelectedTaskId(poll.taskId);
+    } else {
+      setScopeType('STANDALONE');
+    }
     setShowAsPopup(!!poll.showAsPopup);
     setSelectedTaskId(poll.taskId || '');
     setOptions(
@@ -170,7 +183,8 @@ export default function AdminPollsPage() {
         description: description.trim() || null,
         allowMultiple,
         isStandalone: scopeType === 'STANDALONE',
-        showAsPopup: scopeType === 'STANDALONE' ? showAsPopup : false,
+        showAsPopup,
+        dayNumber: scopeType === 'DAY' ? selectedDayNumber : null,
         taskId: scopeType === 'TASK' ? selectedTaskId : null,
         options: cleanOpts,
       };
@@ -449,48 +463,68 @@ export default function AdminPollsPage() {
               </div>
 
               {/* Scope Selection */}
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-3">
                 <label className="text-xs font-bold text-slate-800 block">Poll Publishing Scope</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-1.5">
                   <button
                     type="button"
                     onClick={() => setScopeType('STANDALONE')}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
+                    className={`px-2 py-2 rounded-xl text-[11px] font-bold border transition-all text-center ${
                       scopeType === 'STANDALONE'
                         ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                         : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
                     }`}
                   >
-                    📢 Dashboard Standalone
+                    📢 Standalone
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setScopeType('DAY')}
+                    className={`px-2 py-2 rounded-xl text-[11px] font-bold border transition-all text-center ${
+                      scopeType === 'DAY'
+                        ? 'bg-cyan-600 text-white border-cyan-600 shadow-sm'
+                        : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+                    }`}
+                  >
+                    📅 Day Tasks
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setScopeType('TASK')}
-                    className={`px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
+                    className={`px-2 py-2 rounded-xl text-[11px] font-bold border transition-all text-center ${
                       scopeType === 'TASK'
                         ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
                         : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
                     }`}
                   >
-                    📌 Attach to Task
+                    📌 Specific Task
                   </button>
                 </div>
 
-                {scopeType === 'STANDALONE' && (
-                  <label className="flex items-center gap-2 pt-2 text-xs font-semibold text-slate-700 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={showAsPopup}
-                      onChange={(e) => setShowAsPopup(e.target.checked)}
-                      className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
-                    />
-                    <span>Prompt as interactive pop-up modal on participant dashboard</span>
-                  </label>
+                {scopeType === 'DAY' && (
+                  <div className="pt-1 space-y-1">
+                    <label className="text-[11px] font-bold text-slate-700 block">Select Programme Day</label>
+                    <select
+                      value={selectedDayNumber}
+                      onChange={(e) => setSelectedDayNumber(parseInt(e.target.value, 10))}
+                      className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-cyan-500 outline-none font-bold"
+                    >
+                      {Array.from({ length: 90 }, (_, i) => i + 1).map((dNum) => (
+                        <option key={dNum} value={dNum}>
+                          Day {dNum} {dNum === selectedDayNumber ? '(Selected / Current)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <p className="text-[10px] text-cyan-800 font-medium">
+                      Poll will automatically display alongside Day {selectedDayNumber}'s growth tasks for all participants.
+                    </p>
+                  </div>
                 )}
 
                 {scopeType === 'TASK' && (
-                  <div className="pt-2 space-y-1">
+                  <div className="pt-1 space-y-1">
                     <label className="text-[11px] font-bold text-slate-700 block">Select Target Task</label>
                     <select
                       value={selectedTaskId}
@@ -504,11 +538,18 @@ export default function AdminPollsPage() {
                         </option>
                       ))}
                     </select>
-                    <p className="text-[10px] text-amber-800 font-medium pt-1">
-                      ⚠️ Note: Voting on task polls gathers participant feedback without awarding completion points/credits.
-                    </p>
                   </div>
                 )}
+
+                <label className="flex items-center gap-2 pt-2 border-t border-slate-200/80 text-xs font-semibold text-slate-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={showAsPopup}
+                    onChange={(e) => setShowAsPopup(e.target.checked)}
+                    className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500"
+                  />
+                  <span>Prompt as interactive pop-up modal on participant dashboard</span>
+                </label>
               </div>
 
               {/* Allow Multiple Choice Toggle */}
