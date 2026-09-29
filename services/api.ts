@@ -165,6 +165,7 @@ export const api = {
   // WhatsApp Style Polls
   getAdminPolls: () => fetcher('/polls/admin'),
   createPoll: (body: any) => fetcher('/polls', { method: 'POST', body: JSON.stringify(body) }),
+  updatePoll: (id: string, body: any) => fetcher(`/polls/${id}`, { method: 'PUT', body: JSON.stringify(body) }),
   updatePollStatus: (id: string, status: string) => fetcher(`/polls/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
   deletePoll: (id: string) => fetcher(`/polls/${id}`, { method: 'DELETE' }),
   getActivePolls: () => fetcher('/polls/active'),

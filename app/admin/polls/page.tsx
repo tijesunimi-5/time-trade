@@ -9,13 +9,14 @@ import { Loader } from '../../../components/ui/Loader';
 import { PollCard } from '../../../components/features/PollCard';
 import { api } from '../../../services/api';
 import { toast } from '../../../store/useToastStore';
-import { BarChart2, Plus, Trash2, Eye, CheckCircle, XCircle, Users, CheckSquare, MessageSquare, AlertTriangle, Layers, X, Clock } from 'lucide-react';
+import { BarChart2, Plus, Trash2, Eye, CheckCircle, XCircle, Users, CheckSquare, MessageSquare, AlertTriangle, Layers, X, Clock, Pencil, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 
 export default function AdminPollsPage() {
   const [polls, setPolls] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [editingPollId, setEditingPollId] = useState<string | null>(null);
 
   // Form State
   const [question, setQuestion] = useState('');
@@ -24,7 +25,10 @@ export default function AdminPollsPage() {
   const [scopeType, setScopeType] = useState<'STANDALONE' | 'TASK'>('STANDALONE');
   const [showAsPopup, setShowAsPopup] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState('');
-  const [options, setOptions] = useState<string[]>(['Option 1', 'Option 2']);
+  const [options, setOptions] = useState<any[]>([
+    { text: 'Option 1', displayOrder: 1 },
+    { text: 'Option 2', displayOrder: 2 },
+  ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Selected Voters Detail Modal State
@@ -51,8 +55,44 @@ export default function AdminPollsPage() {
     loadAdminPolls();
   }, []);
 
+  const handleOpenCreateModal = () => {
+    setEditingPollId(null);
+    setQuestion('');
+    setDescription('');
+    setAllowMultiple(false);
+    setScopeType('STANDALONE');
+    setShowAsPopup(false);
+    setSelectedTaskId('');
+    setOptions([
+      { text: 'Option 1', displayOrder: 1 },
+      { text: 'Option 2', displayOrder: 2 },
+    ]);
+    setShowCreateModal(true);
+  };
+
+  const handleOpenEditPoll = (poll: any) => {
+    setEditingPollId(poll.id);
+    setQuestion(poll.question || '');
+    setDescription(poll.description || '');
+    setAllowMultiple(!!poll.allowMultiple);
+    setScopeType(poll.taskId ? 'TASK' : 'STANDALONE');
+    setShowAsPopup(!!poll.showAsPopup);
+    setSelectedTaskId(poll.taskId || '');
+    setOptions(
+      poll.options?.map((o: any, idx: number) => ({
+        id: o.id,
+        text: o.text || '',
+        displayOrder: o.displayOrder || idx + 1,
+      })) || [
+        { text: 'Option 1', displayOrder: 1 },
+        { text: 'Option 2', displayOrder: 2 },
+      ]
+    );
+    setShowCreateModal(true);
+  };
+
   const handleAddOptionField = () => {
-    setOptions((prev) => [...prev, `Option ${prev.length + 1}`]);
+    setOptions((prev) => [...prev, { text: `Option ${prev.length + 1}`, displayOrder: prev.length + 1 }]);
   };
 
   const handleRemoveOptionField = (index: number) => {
@@ -64,12 +104,40 @@ export default function AdminPollsPage() {
   };
 
   const handleOptionTextChange = (index: number, val: string) => {
-    const updated = [...options];
-    updated[index] = val;
-    setOptions(updated);
+    setOptions((prev) => {
+      const updated = [...prev];
+      if (typeof updated[index] === 'string') {
+        updated[index] = { text: val, displayOrder: index + 1 };
+      } else {
+        updated[index] = { ...updated[index], text: val };
+      }
+      return updated;
+    });
   };
 
-  const handleCreatePoll = async (e: React.FormEvent) => {
+  const moveOptionUp = (index: number) => {
+    if (index <= 0) return;
+    setOptions((prev) => {
+      const updated = [...prev];
+      const temp = updated[index];
+      updated[index] = updated[index - 1];
+      updated[index - 1] = temp;
+      return updated;
+    });
+  };
+
+  const moveOptionDown = (index: number) => {
+    setOptions((prev) => {
+      if (index >= prev.length - 1) return prev;
+      const updated = [...prev];
+      const temp = updated[index];
+      updated[index] = updated[index + 1];
+      updated[index + 1] = temp;
+      return updated;
+    });
+  };
+
+  const handleSavePoll = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!question.trim()) {
@@ -77,7 +145,14 @@ export default function AdminPollsPage() {
       return;
     }
 
-    const cleanOpts = options.map((o) => o.trim()).filter((o) => o.length > 0);
+    const cleanOpts = options
+      .map((o, idx) => ({
+        id: o.id || undefined,
+        text: (typeof o === 'string' ? o : o.text || '').trim(),
+        displayOrder: idx + 1,
+      }))
+      .filter((o) => o.text.length > 0);
+
     if (cleanOpts.length < 2) {
       toast.error('Minimum Options', 'At least 2 valid options are required.');
       return;
@@ -90,7 +165,7 @@ export default function AdminPollsPage() {
 
     try {
       setIsSubmitting(true);
-      await api.createPoll({
+      const payload = {
         question: question.trim(),
         description: description.trim() || null,
         allowMultiple,
@@ -98,21 +173,20 @@ export default function AdminPollsPage() {
         showAsPopup: scopeType === 'STANDALONE' ? showAsPopup : false,
         taskId: scopeType === 'TASK' ? selectedTaskId : null,
         options: cleanOpts,
-      });
+      };
 
-      toast.success('Poll Created', 'WhatsApp-style poll has been published successfully.');
+      if (editingPollId) {
+        await api.updatePoll(editingPollId, payload);
+        toast.success('Poll Updated', 'Poll and option order updated successfully.');
+      } else {
+        await api.createPoll(payload);
+        toast.success('Poll Published', 'New WhatsApp-style poll published successfully.');
+      }
+
       setShowCreateModal(false);
-      // Reset form
-      setQuestion('');
-      setDescription('');
-      setAllowMultiple(false);
-      setScopeType('STANDALONE');
-      setShowAsPopup(false);
-      setSelectedTaskId('');
-      setOptions(['Option 1', 'Option 2']);
       loadAdminPolls();
     } catch (err: any) {
-      console.error('Failed to create poll:', err);
+      console.error('Failed to save poll:', err);
     } finally {
       setIsSubmitting(false);
     }
@@ -298,14 +372,25 @@ export default function AdminPollsPage() {
                       <span>{poll.totalVotersCount} Voters Breakdown</span>
                     </button>
 
-                    <button
-                      onClick={() => handleDeletePoll(poll.id)}
-                      className="text-xs font-bold text-red-600 hover:text-red-800 flex items-center gap-1 p-1.5 rounded-lg hover:bg-red-50"
-                      title="Delete Poll"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                      <span>Delete</span>
-                    </button>
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleOpenEditPoll(poll)}
+                        className="text-xs font-bold text-slate-700 hover:text-brand-600 flex items-center gap-1 p-1.5 rounded-lg hover:bg-slate-100"
+                        title="Edit Poll & Options"
+                      >
+                        <Pencil className="w-4 h-4 text-slate-500" />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        onClick={() => handleDeletePoll(poll.id)}
+                        className="text-xs font-bold text-red-600 hover:text-red-800 flex items-center gap-1 p-1.5 rounded-lg hover:bg-red-50"
+                        title="Delete Poll"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                        <span>Delete</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -321,7 +406,9 @@ export default function AdminPollsPage() {
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-2">
                 <BarChart2 className="w-5 h-5 text-emerald-600" />
-                <h3 className="text-base font-black text-slate-900">Create WhatsApp-Style Poll</h3>
+                <h3 className="text-base font-black text-slate-900">
+                  {editingPollId ? 'Edit WhatsApp Poll & Options' : 'Create WhatsApp-Style Poll'}
+                </h3>
               </div>
               <button
                 onClick={() => setShowCreateModal(false)}
@@ -331,7 +418,7 @@ export default function AdminPollsPage() {
               </button>
             </div>
 
-            <form onSubmit={handleCreatePoll} className="space-y-4">
+            <form onSubmit={handleSavePoll} className="space-y-4">
               {/* Poll Question */}
               <div>
                 <label className="text-xs font-bold text-slate-700 block mb-1">
@@ -440,11 +527,11 @@ export default function AdminPollsPage() {
                 </div>
               </label>
 
-              {/* Poll Options Builder */}
+              {/* Poll Options Builder with Rearrange Controls */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-slate-700">
-                    Poll Options (Min 2) <span className="text-red-500">*</span>
+                    Poll Options (Min 2, Rearrange with ▲ / ▼) <span className="text-red-500">*</span>
                   </label>
                   <button
                     type="button"
@@ -456,30 +543,58 @@ export default function AdminPollsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  {options.map((optText, idx) => (
-                    <div key={idx} className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-400 w-5 shrink-0 font-mono">
-                        {idx + 1}.
-                      </span>
-                      <input
-                        type="text"
-                        required
-                        placeholder={`Option ${idx + 1}`}
-                        value={optText}
-                        onChange={(e) => handleOptionTextChange(idx, e.target.value)}
-                        className="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-none"
-                      />
-                      {options.length > 2 && (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveOptionField(idx)}
-                          className="p-2 text-slate-400 hover:text-red-600 rounded-lg"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
+                  {options.map((optObj, idx) => {
+                    const optVal = typeof optObj === 'string' ? optObj : optObj.text || '';
+                    return (
+                      <div key={idx} className="flex items-center gap-1.5 bg-slate-50/70 p-1.5 rounded-xl border border-slate-200">
+                        {/* Rearrange Up / Down Buttons */}
+                        <div className="flex flex-col items-center justify-center shrink-0 -space-y-1">
+                          <button
+                            type="button"
+                            onClick={() => moveOptionUp(idx)}
+                            disabled={idx === 0}
+                            title="Move Option Up"
+                            className="p-1 text-slate-500 hover:text-emerald-700 hover:bg-slate-200/70 disabled:opacity-30 rounded"
+                          >
+                            <ChevronUp className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => moveOptionDown(idx)}
+                            disabled={idx === options.length - 1}
+                            title="Move Option Down"
+                            className="p-1 text-slate-500 hover:text-emerald-700 hover:bg-slate-200/70 disabled:opacity-30 rounded"
+                          >
+                            <ChevronDown className="w-3.5 h-3.5 stroke-[2.5]" />
+                          </button>
+                        </div>
+
+                        <span className="text-xs font-bold text-slate-500 w-4 shrink-0 font-mono text-center">
+                          {idx + 1}.
+                        </span>
+
+                        <input
+                          type="text"
+                          required
+                          placeholder={`Option ${idx + 1}`}
+                          value={optVal}
+                          onChange={(e) => handleOptionTextChange(idx, e.target.value)}
+                          className="flex-1 px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-none bg-white font-medium"
+                        />
+
+                        {options.length > 2 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveOptionField(idx)}
+                            className="p-2 text-slate-400 hover:text-red-600 rounded-lg hover:bg-red-50"
+                            title="Remove Option"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
@@ -497,7 +612,11 @@ export default function AdminPollsPage() {
                   disabled={isSubmitting}
                   className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black shadow-md flex items-center gap-2"
                 >
-                  {isSubmitting ? 'Publishing...' : 'Publish WhatsApp Poll'}
+                  {isSubmitting
+                    ? 'Saving...'
+                    : editingPollId
+                    ? 'Update Poll & Options'
+                    : 'Publish WhatsApp Poll'}
                 </button>
               </div>
             </form>

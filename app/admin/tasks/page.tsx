@@ -1189,9 +1189,9 @@ export default function AdminTasksPage() {
 
       {/* Task Modal (Create & Edit) */}
       {showTaskModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <Card variant="glass" className="max-w-xl w-full p-6 space-y-4 bg-white my-8">
-            <h3 className="text-lg font-bold text-slate-900">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <Card variant="glass" className="max-w-xl w-full p-4 sm:p-6 space-y-4 bg-white my-auto max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl border border-slate-200">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900">
               {editingTaskId ? 'Edit Programme Task' : 'Assign / Create Task for Programme Day'}
             </h3>
             <form onSubmit={handleSaveTask} className="space-y-3">
@@ -1235,7 +1235,7 @@ export default function AdminTasksPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">Pillar</label>
                   <select
@@ -1266,7 +1266,7 @@ export default function AdminTasksPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Input
                   label="Duration (Minutes)"
                   type="number"
@@ -1292,7 +1292,7 @@ export default function AdminTasksPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Input
                   label="Book Page Range (Optional)"
                   placeholder="e.g. Chapter 2, pp. 15–30"
@@ -1320,14 +1320,14 @@ export default function AdminTasksPage() {
                   id="nonNeg"
                   checked={isNonNegotiable}
                   onChange={(e) => setIsNonNegotiable(e.target.checked)}
-                  className="rounded accent-amber-600 cursor-pointer"
+                  className="rounded accent-amber-600 cursor-pointer w-4 h-4"
                 />
                 <label htmlFor="nonNeg" className="text-xs font-bold text-slate-700 cursor-pointer">
                   Flag as Non-Negotiable Task
                 </label>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-3">
                 <Button type="button" variant="glass" size="sm" onClick={() => setShowTaskModal(false)}>
                   Cancel
                 </Button>
@@ -1432,9 +1432,9 @@ export default function AdminTasksPage() {
 
       {/* Resource Modal (Create & Edit) */}
       {showResourceModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <Card variant="glass" className="max-w-md w-full p-6 space-y-4 bg-white shadow-2xl">
-            <h3 className="text-lg font-bold text-slate-900">
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <Card variant="glass" className="max-w-lg w-full p-4 sm:p-6 space-y-4 bg-white shadow-2xl max-h-[92vh] overflow-y-auto my-auto rounded-2xl border border-slate-200">
+            <h3 className="text-base sm:text-lg font-bold text-slate-900">
               {editingResourceId ? 'Edit Curated Resource' : 'Add Curated Resource'}
             </h3>
             <form onSubmit={handleSaveResource} className="space-y-4">
@@ -1445,13 +1445,13 @@ export default function AdminTasksPage() {
                 onChange={(e) => setResourceTitle(e.target.value)}
                 placeholder="e.g. Mindset: The New Psychology of Success"
               />
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs font-bold text-slate-700 block mb-1">Resource Type</label>
                   <select
                     value={resourceType}
                     onChange={(e) => setResourceType(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white outline-none font-medium"
+                    className="w-full px-3 py-2.5 rounded-xl border border-slate-300 text-xs bg-white outline-none font-medium"
                   >
                     <option value="BIBLE">✝️ BIBLE STUDY</option>
                     <option value="BOOK">📖 BOOK</option>
@@ -1474,13 +1474,13 @@ export default function AdminTasksPage() {
               <div className="p-3.5 bg-amber-50/80 rounded-xl border border-amber-200 space-y-3">
                 <div
                   onClick={() => setResourceIsAutoIncrement(!resourceIsAutoIncrement)}
-                  className="flex items-center justify-between cursor-pointer"
+                  className="flex items-start justify-between cursor-pointer gap-2"
                 >
-                  <div>
+                  <div className="space-y-0.5">
                     <span className="text-xs font-bold text-amber-950 block">
                       Auto-Increment Reading Plan (Daily Progression)
                     </span>
-                    <span className="text-[11px] text-amber-800 font-normal">
+                    <span className="text-[11px] text-amber-800 font-normal block leading-tight">
                       Automatically update chapters/pages every day based on active challenge day!
                     </span>
                   </div>
@@ -1488,13 +1488,13 @@ export default function AdminTasksPage() {
                     type="checkbox"
                     checked={resourceIsAutoIncrement || resourceType === 'BIBLE'}
                     onChange={(e) => setResourceIsAutoIncrement(e.target.checked)}
-                    className="w-4 h-4 text-amber-600 rounded"
+                    className="w-4 h-4 text-amber-600 rounded shrink-0 mt-0.5"
                   />
                 </div>
 
                 {(resourceIsAutoIncrement || resourceType === 'BIBLE') && (
                   <div className="space-y-3 pt-2 border-t border-amber-200/80">
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <Input
                         label="Book / Bible Name"
                         value={resourceBookName}
@@ -1514,7 +1514,7 @@ export default function AdminTasksPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <Input
                         label="Starting Chapter/Page"
                         type="number"
@@ -1557,7 +1557,7 @@ export default function AdminTasksPage() {
               {/* Access Mode Selector: Link vs Softcopy File */}
               <div className="space-y-2 pt-1 border-t border-slate-100">
                 <label className="text-xs font-bold text-slate-800 block">Access Mode & Softcopy Provision</label>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setResourceAccessType('LINK')}
@@ -1599,7 +1599,7 @@ export default function AdminTasksPage() {
                     onChange={handleFileUpload}
                     accept=".pdf,.epub,.doc,.docx,.mp3,.mp4,.txt,.zip"
                     disabled={isUploadingFile}
-                    className="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer"
+                    className="block w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-emerald-600 file:text-white hover:file:bg-emerald-700 cursor-pointer"
                   />
 
                   {isUploadingFile && (
@@ -1608,9 +1608,9 @@ export default function AdminTasksPage() {
 
                   {resourceFileUrl && (
                     <div className="p-2 bg-white rounded-lg border border-emerald-300 flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-1.5 text-emerald-950 font-bold">
-                        <Download className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="truncate max-w-[200px]">{resourceFileName || 'Uploaded Softcopy'}</span>
+                      <div className="flex items-center gap-1.5 text-emerald-950 font-bold min-w-0 flex-1">
+                        <Download className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        <span className="truncate max-w-[150px] sm:max-w-[220px]">{resourceFileName || 'Uploaded Softcopy'}</span>
                       </div>
                       <button
                         type="button"
@@ -1618,7 +1618,7 @@ export default function AdminTasksPage() {
                           setResourceFileUrl('');
                           setResourceFileName('');
                         }}
-                        className="text-[10px] text-red-600 font-bold hover:underline"
+                        className="text-[10px] text-red-600 font-bold hover:underline shrink-0 ml-2"
                       >
                         Remove
                       </button>
@@ -1644,7 +1644,7 @@ export default function AdminTasksPage() {
                 />
               )}
 
-              <div className="flex justify-end gap-2 pt-2">
+              <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 pt-2">
                 <Button type="button" variant="glass" size="sm" onClick={() => setShowResourceModal(false)}>
                   Cancel
                 </Button>
