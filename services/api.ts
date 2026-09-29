@@ -62,6 +62,8 @@ export const api = {
   createTask: (task: any) => fetcher('/tasks', { method: 'POST', body: JSON.stringify(task) }),
   updateTask: (id: string, task: any) => fetcher(`/tasks/${id}`, { method: 'PUT', body: JSON.stringify(task) }),
   deleteTask: (id: string) => fetcher(`/tasks/${id}`, { method: 'DELETE' }),
+  reorderTasks: (taskOrders: { id: string; displayOrder: number }[]) =>
+    fetcher('/tasks/reorder', { method: 'PUT', body: JSON.stringify({ taskOrders }) }),
 
   // Progress
   getProgress: () => fetcher('/progress'),

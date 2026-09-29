@@ -9,7 +9,8 @@ import { Input } from '../../../components/ui/Input';
 import { api } from '../../../services/api';
 import { Loader } from '../../../components/ui/Loader';
 import { toast } from '../../../store/useToastStore';
-import { Plus, Trash2, Pencil, BookOpen, Layers, CheckSquare, FolderPlus, ArrowRight, Calendar, Clock, Upload, FileText, Download, ExternalLink } from 'lucide-react';
+import { TaskReorderList } from '../../../components/features/TaskReorderList';
+import { Plus, Trash2, Pencil, BookOpen, Layers, CheckSquare, FolderPlus, ArrowRight, Calendar, Clock, Upload, FileText, Download, ExternalLink, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
 
 export default function AdminTasksPage() {
   const [activeTab, setActiveTab] = useState<'TREE' | 'TEMPLATES' | 'RESOURCES'>('TREE');
@@ -883,45 +884,12 @@ export default function AdminTasksPage() {
                                       {day.tasks?.length === 0 ? (
                                         <p className="text-[11px] text-slate-400 italic">No day-specific tasks assigned</p>
                                       ) : (
-                                        <div className="space-y-1">
-                                          {day.tasks?.map((t: any) => (
-                                            <div
-                                              key={t.id}
-                                              className="group text-[11px] text-slate-700 flex items-center justify-between bg-slate-50 hover:bg-slate-100 p-2 rounded border border-slate-200 transition-colors"
-                                            >
-                                              <div className="flex items-center gap-2 truncate pr-2">
-                                                <Badge variant={t.pillar?.toLowerCase() as any}>{t.pillar}</Badge>
-                                                <span className="font-medium truncate">{t.title}</span>
-                                                 <span className="text-[9px] font-bold text-slate-500 bg-slate-200/80 px-1.5 py-0.5 rounded flex items-center gap-0.5 shrink-0">
-                                                   <Clock className="w-2.5 h-2.5 text-slate-500" />
-                                                   {t.durationMinutes || 15}m
-                                                 </span>
-                                                {t.isNonNegotiable && (
-                                                  <span className="text-[9px] font-extrabold uppercase bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
-                                                    Non-Neg
-                                                  </span>
-                                                )}
-                                              </div>
-
-                                              <div className="flex items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                  onClick={() => handleOpenEditTask(t)}
-                                                  title="Edit Task"
-                                                  className="p-1 text-slate-500 hover:text-brand-600 hover:bg-white rounded transition-colors"
-                                                >
-                                                  <Pencil className="w-3 h-3" />
-                                                </button>
-                                                <button
-                                                  onClick={() => handleDeleteTask(t.id, t.title)}
-                                                  title="Delete Task"
-                                                  className="p-1 text-slate-500 hover:text-red-600 hover:bg-white rounded transition-colors"
-                                                >
-                                                  <Trash2 className="w-3 h-3" />
-                                                </button>
-                                              </div>
-                                            </div>
-                                          ))}
-                                        </div>
+                                        <TaskReorderList
+                                          tasks={day.tasks}
+                                          onEditTask={handleOpenEditTask}
+                                          onDeleteTask={handleDeleteTask}
+                                          onReorderSuccess={loadAdminTree}
+                                        />
                                       )}
                                     </div>
                                   ))}
