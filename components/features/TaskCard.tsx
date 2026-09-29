@@ -1,6 +1,7 @@
 import React from 'react';
 import { Check, Clock, ExternalLink, BookOpen, Headphones, MessageSquare, AlertCircle, Lock, Download, Video, FileText, Mic } from 'lucide-react';
 import { Badge } from '../ui/Badge';
+import { PollCard } from './PollCard';
 
 export interface Task {
   id: string;
@@ -23,6 +24,7 @@ export interface Task {
   instructions?: string;
   displayOrder?: number;
   isCompleted?: boolean;
+  poll?: any;
   resource?: {
     id: string;
     title: string;
@@ -266,6 +268,13 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
           {/* Interactive Media / Resource / Softcopy Download Actions */}
           {renderResourceActionButtons()}
+
+          {/* Attached WhatsApp Poll */}
+          {task.poll && (
+            <div className="mt-3">
+              <PollCard poll={task.poll} variant="embedded" isReadOnly={isReadOnly} />
+            </div>
+          )}
 
           {/* Reflection / Discussion Questions */}
           {task.discussionQuestions && (

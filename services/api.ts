@@ -159,4 +159,13 @@ export const api = {
   },
   respondToFeedbackAdmin: (id: string, body: { status?: string; adminResponse?: string }) =>
     fetcher(`/feedback/admin/${id}/respond`, { method: 'PUT', body: JSON.stringify(body) }),
+
+  // WhatsApp Style Polls
+  getAdminPolls: () => fetcher('/polls/admin'),
+  createPoll: (body: any) => fetcher('/polls', { method: 'POST', body: JSON.stringify(body) }),
+  updatePollStatus: (id: string, status: string) => fetcher(`/polls/${id}/status`, { method: 'PATCH', body: JSON.stringify({ status }) }),
+  deletePoll: (id: string) => fetcher(`/polls/${id}`, { method: 'DELETE' }),
+  getActivePolls: () => fetcher('/polls/active'),
+  getTaskPoll: (taskId: string) => fetcher(`/polls/task/${taskId}`),
+  votePoll: (id: string, optionIds: string[]) => fetcher(`/polls/${id}/vote`, { method: 'POST', body: JSON.stringify({ optionIds }) }),
 };

@@ -7,12 +7,13 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { TaskCard, Task } from '../../components/features/TaskCard';
+import { PollCard } from '../../components/features/PollCard';
 import { WhatsAppCommunityBanner } from '../../components/features/WhatsAppCommunityBanner';
 import { useAuthStore } from '../../store/useAuthStore';
 import { api } from '../../services/api';
 import { Loader } from '../../components/ui/Loader';
 import { toast } from '../../store/useToastStore';
-import { Flame, CheckCircle2, Trophy, Target, Sparkles, BookOpen, Plus, X } from 'lucide-react';
+import { Flame, CheckCircle2, Trophy, Target, Sparkles, BookOpen, Plus, X, BarChart2 } from 'lucide-react';
 
 export default function ParticipantDashboard() {
   const { user } = useAuthStore();
@@ -20,6 +21,9 @@ export default function ParticipantDashboard() {
   const [dayData, setDayData] = useState<any>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [progress, setProgress] = useState<any>(null);
+  const [standalonePolls, setStandalonePolls] = useState<any[]>([]);
+  const [popupPoll, setPopupPoll] = useState<any | null>(null);
+  const [dismissedPopupPollIds, setDismissedPopupPollIds] = useState<string[]>([]);
   const [activePillar, setActivePillar] = useState<string>('ALL');
   const [activeTimeOfDay, setActiveTimeOfDay] = useState<'ALL' | 'MORNING' | 'AFTERNOON' | 'NIGHT'>('ALL');
   const [isLoading, setIsLoading] = useState(true);
@@ -39,10 +43,11 @@ export default function ParticipantDashboard() {
   const loadDashboardData = async () => {
     try {
       setIsLoading(true);
-      const [progRes, dayRes, progressRes] = await Promise.all([
+      const [progRes, dayRes, progressRes, pollsRes] = await Promise.all([
         api.getCurrentProgramme().catch(() => null),
         api.getDayDetails().catch(() => null),
         api.getProgress().catch(() => null),
+        api.getActivePolls().catch(() => ({ polls: [] })),
       ]);
 
       setProgrammeInfo(progRes);
@@ -54,6 +59,17 @@ export default function ParticipantDashboard() {
         setJournalNote(dayRes.journalNote);
       }
       setProgress(progressRes);
+
+      const activePolls = pollsRes?.polls || [];
+      setStandalonePolls(activePolls);
+
+      // Check if any popup poll requires user attention
+      const targetPopupPoll = activePolls.find(
+        (p: any) => p.showAsPopup && !p.hasVoted && !dismissedPopupPollIds.includes(p.id)
+      );
+      if (targetPopupPoll) {
+        setPopupPoll(targetPopupPoll);
+      }
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     } finally {
@@ -371,6 +387,30 @@ export default function ParticipantDashboard() {
         {/* WhatsApp Banner Integration */}
         <WhatsAppCommunityBanner />
 
+        {/* Cohort Community Polls Section */}
+        {standalonePolls.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <BarChart2 className="w-5 h-5 text-emerald-600" />
+              <h2 className="text-lg font-black text-slate-900">Cohort Live Community Polls</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {standalonePolls.map((poll) => (
+                <PollCard
+                  key={poll.id}
+                  poll={poll}
+                  variant="standalone"
+                  onVoteSuccess={(updated) => {
+                    setStandalonePolls((prev) =>
+                      prev.map((p) => (p.id === updated.id ? updated : p))
+                    );
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Daily Journal Reflection Box (Optional) */}
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-subtle-sm space-y-3">
           <div className="flex items-center justify-between">
@@ -529,6 +569,44 @@ export default function ParticipantDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Interactive Dashboard Poll Pop-up Modal */}
+      {popupPoll && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl relative border border-slate-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-4 text-white flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BarChart2 className="w-5 h-5 text-emerald-200" />
+                <span className="text-xs font-black uppercase tracking-wider text-white">
+                  Cohort Live Poll Prompt
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  setDismissedPopupPollIds((prev) => [...prev, popupPoll.id]);
+                  setPopupPoll(null);
+                }}
+                className="p-1 text-white/80 hover:text-white rounded-lg hover:bg-white/10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 sm:p-5">
+              <PollCard
+                poll={popupPoll}
+                variant="modal"
+                onVoteSuccess={(updated) => {
+                  setStandalonePolls((prev) =>
+                    prev.map((p) => (p.id === updated.id ? updated : p))
+                  );
+                  setTimeout(() => setPopupPoll(null), 1200);
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

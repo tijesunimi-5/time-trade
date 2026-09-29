@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   MessageSquare,
+  BarChart2,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -76,6 +77,7 @@ export const Sidebar: React.FC = () => {
     { href: '/admin/participants', label: 'Participant Answers', icon: Users },
     { href: '/admin/forms', label: 'Question Builder', icon: Settings },
     { href: '/admin/tasks', label: 'Task Engine Manager', icon: CheckSquare },
+    { href: '/admin/polls', label: 'Polls & Surveys', icon: BarChart2 },
     { href: '/admin/feedback', label: 'Feedback Management', icon: MessageSquare },
     { href: '/admin/settings', label: 'EXCO System Settings', icon: Settings },
   ];
