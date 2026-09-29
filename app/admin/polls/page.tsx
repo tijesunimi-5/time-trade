@@ -26,6 +26,9 @@ export default function AdminPollsPage() {
   const [selectedDayNumber, setSelectedDayNumber] = useState<number>(1);
   const [showAsPopup, setShowAsPopup] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState('');
+  const [expirationMode, setExpirationMode] = useState<'END_OF_DAY' | 'HOURS' | 'EXACT_TIME' | 'NEVER'>('END_OF_DAY');
+  const [durationHours, setDurationHours] = useState<number>(4);
+  const [exactExpiresAt, setExactExpiresAt] = useState<string>('');
   const [options, setOptions] = useState<any[]>([
     { text: 'Option 1', displayOrder: 1 },
     { text: 'Option 2', displayOrder: 2 },
@@ -68,6 +71,9 @@ export default function AdminPollsPage() {
     setScopeType('STANDALONE');
     setShowAsPopup(false);
     setSelectedTaskId('');
+    setExpirationMode('END_OF_DAY');
+    setDurationHours(4);
+    setExactExpiresAt('');
     setOptions([
       { text: 'Option 1', displayOrder: 1 },
       { text: 'Option 2', displayOrder: 2 },
@@ -91,6 +97,15 @@ export default function AdminPollsPage() {
     }
     setShowAsPopup(!!poll.showAsPopup);
     setSelectedTaskId(poll.taskId || '');
+
+    if (poll.expiresAt) {
+      setExpirationMode('EXACT_TIME');
+      setExactExpiresAt(new Date(poll.expiresAt).toISOString().slice(0, 16));
+    } else {
+      setExpirationMode('NEVER');
+      setExactExpiresAt('');
+    }
+
     setOptions(
       poll.options?.map((o: any, idx: number) => ({
         id: o.id,
@@ -186,6 +201,9 @@ export default function AdminPollsPage() {
         showAsPopup,
         dayNumber: scopeType === 'DAY' ? selectedDayNumber : null,
         taskId: scopeType === 'TASK' ? selectedTaskId : null,
+        expirationMode,
+        durationHours: expirationMode === 'HOURS' ? durationHours : undefined,
+        exactExpiresAt: expirationMode === 'EXACT_TIME' ? exactExpiresAt : undefined,
         options: cleanOpts,
       };
 
@@ -550,6 +568,53 @@ export default function AdminPollsPage() {
                   />
                   <span>Prompt as interactive pop-up modal on participant dashboard</span>
                 </label>
+              </div>
+
+              {/* Poll Deadline / Expiration Settings */}
+              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  Poll Expiration & Duration Settings
+                </label>
+                <select
+                  value={expirationMode}
+                  onChange={(e) => setExpirationMode(e.target.value as any)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-emerald-500 outline-none font-medium"
+                >
+                  <option value="END_OF_DAY">🌙 End of System Day (23:59:59)</option>
+                  <option value="HOURS">⏱️ Preset Duration (In Next X Hours)</option>
+                  <option value="EXACT_TIME">📅 Specific Target Date & Time</option>
+                  <option value="NEVER">♾️ Always Active (No Expiration)</option>
+                </select>
+
+                {expirationMode === 'HOURS' && (
+                  <div className="pt-1 flex items-center gap-2">
+                    <label className="text-[11px] font-bold text-slate-700 shrink-0">Duration (Hours):</label>
+                    <input
+                      type="number"
+                      min={0.5}
+                      max={168}
+                      step={0.5}
+                      value={durationHours}
+                      onChange={(e) => setDurationHours(parseFloat(e.target.value) || 4)}
+                      className="w-24 px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-none font-bold bg-white"
+                    />
+                    <span className="text-[10px] text-slate-500 font-medium">e.g. 1, 2, 4, 6, 12, 24</span>
+                  </div>
+                )}
+
+                {expirationMode === 'EXACT_TIME' && (
+                  <div className="pt-1 space-y-1">
+                    <label className="text-[11px] font-bold text-slate-700 block">Select Exact End Date & Time:</label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={exactExpiresAt}
+                      onChange={(e) => setExactExpiresAt(e.target.value)}
+                      className="w-full px-3 py-1.5 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-emerald-500 outline-none font-medium bg-white"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Allow Multiple Choice Toggle */}

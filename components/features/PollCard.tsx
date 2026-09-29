@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Check, CheckSquare, Square, Circle, CheckCircle2, BarChart2, MessageSquare, Info, Award } from 'lucide-react';
+import { Check, CheckSquare, Square, Circle, CheckCircle2, BarChart2, MessageSquare, Info, Award, ChevronDown, ChevronUp } from 'lucide-react';
 import { api } from '../../services/api';
 import { toast } from '../../store/useToastStore';
 
@@ -26,6 +26,8 @@ export interface PollData {
   userVotedOptionIds?: string[];
   options: PollOptionData[];
   taskTitle?: string | null;
+  expiresAt?: string | null;
+  isExpired?: boolean;
 }
 
 interface PollCardProps {
@@ -46,6 +48,9 @@ export const PollCard: React.FC<PollCardProps> = ({
     initialPoll.userVotedOptionIds || initialPoll.options.filter((o) => o.hasVoted).map((o) => o.id) || []
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(
+    Boolean(initialPoll.hasVoted && variant !== 'modal')
+  );
 
   useEffect(() => {
     setPoll(initialPoll);
@@ -54,7 +59,7 @@ export const PollCard: React.FC<PollCardProps> = ({
     );
   }, [initialPoll]);
 
-  const isClosed = poll.status === 'CLOSED';
+  const isClosed = poll.status === 'CLOSED' || Boolean(poll.isExpired);
 
   const handleOptionToggle = (optionId: string) => {
     if (isClosed || isReadOnly) return;
@@ -92,6 +97,41 @@ export const PollCard: React.FC<PollCardProps> = ({
     }
   };
 
+  if (isCollapsed) {
+    return (
+      <div
+        onClick={() => setIsCollapsed(false)}
+        className="bg-white/95 border border-slate-200 hover:border-emerald-400 p-3.5 sm:p-4 rounded-2xl shadow-sm transition-all cursor-pointer flex items-center justify-between gap-3 group"
+      >
+        <div className="flex items-center gap-2.5 min-w-0 flex-1">
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300 shrink-0">
+            <Check className="w-3 h-3 stroke-[3]" /> Voted
+          </span>
+          <h4 className="text-xs sm:text-sm font-extrabold text-slate-800 truncate">
+            {poll.question}
+          </h4>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[10px] font-semibold text-slate-500 hidden sm:inline">
+            {poll.totalVotes} {poll.totalVotes === 1 ? 'voter' : 'voters'}
+          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsCollapsed(false);
+            }}
+            className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 group-hover:bg-emerald-100 px-2.5 py-1 rounded-xl transition-colors"
+          >
+            <span>Update Selection</span>
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const containerClasses =
     variant === 'embedded'
       ? 'bg-gradient-to-br from-emerald-900/5 via-teal-900/10 to-emerald-900/5 p-4 sm:p-5 rounded-2xl border border-emerald-200/90 shadow-subtle-sm my-3'
@@ -122,11 +162,24 @@ export const PollCard: React.FC<PollCardProps> = ({
             )}
           </div>
 
-          {isClosed && (
-            <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded bg-slate-200 text-slate-700">
-              Poll Closed
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {isClosed && (
+              <span className="text-[10px] font-extrabold uppercase tracking-widest px-2.5 py-0.5 rounded bg-slate-200 text-slate-700">
+                Poll Closed
+              </span>
+            )}
+
+            {poll.hasVoted && variant !== 'modal' && (
+              <button
+                type="button"
+                onClick={() => setIsCollapsed(true)}
+                className="text-[11px] font-bold text-slate-500 hover:text-slate-800 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1"
+              >
+                <span>Collapse Poll</span>
+                <ChevronUp className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
         <h3 className="text-base sm:text-lg font-black text-slate-900 leading-snug">
