@@ -86,6 +86,7 @@ export const PollCard: React.FC<PollCardProps> = ({
       }
     } catch (err: any) {
       console.error('Failed to submit vote:', err);
+      toast.error('Vote Error', err.message || 'Unable to save vote. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
