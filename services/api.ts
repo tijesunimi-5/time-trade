@@ -15,6 +15,7 @@ async function fetcher(endpoint: string, options: FetcherOptions = {}) {
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'x-client-date': new Date().toLocaleDateString('sv-SE'),
     ...((fetchOptions.headers as Record<string, string>) || {}),
   };
 
