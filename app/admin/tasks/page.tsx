@@ -90,6 +90,7 @@ export default function AdminTasksPage() {
   // Resource Auto-Increment Reading Plan Form State
   const [resourceIsAutoIncrement, setResourceIsAutoIncrement] = useState(false);
   const [resourceStartUnit, setResourceStartUnit] = useState<number>(1);
+  const [resourceStartDayNumber, setResourceStartDayNumber] = useState<number>(1);
   const [resourceUnitsPerDay, setResourceUnitsPerDay] = useState<number>(3);
   const [resourceUnitType, setResourceUnitType] = useState<'CHAPTERS' | 'PAGES'>('CHAPTERS');
   const [resourceBookName, setResourceBookName] = useState('');
@@ -442,6 +443,7 @@ export default function AdminTasksPage() {
     setResourceAccessType('LINK');
     setResourceIsAutoIncrement(true);
     setResourceStartUnit(1);
+    setResourceStartDayNumber(1);
     setResourceUnitsPerDay(3);
     setResourceUnitType('CHAPTERS');
     setResourceBookName('Matthew');
@@ -461,6 +463,7 @@ export default function AdminTasksPage() {
     setResourceAccessType(res.accessType || (res.fileUrl ? 'FILE' : 'LINK'));
     setResourceIsAutoIncrement(!!res.isAutoIncrement || res.type === 'BIBLE');
     setResourceStartUnit(res.startUnit ?? 1);
+    setResourceStartDayNumber(res.startDayNumber ?? 1);
     setResourceUnitsPerDay(res.unitsPerDay ?? 3);
     setResourceUnitType(res.unitType || (res.type === 'BIBLE' ? 'CHAPTERS' : 'PAGES'));
     setResourceBookName(res.bookName || res.title || '');
@@ -511,6 +514,7 @@ export default function AdminTasksPage() {
         accessType: resourceAccessType,
         isAutoIncrement: resourceIsAutoIncrement || resourceType === 'BIBLE',
         startUnit: Number(resourceStartUnit) || 1,
+        startDayNumber: Number(resourceStartDayNumber) || 1,
         unitsPerDay: Number(resourceUnitsPerDay) || 3,
         unitType: resourceUnitType,
         bookName: resourceBookName || resourceTitle || undefined,
@@ -1514,14 +1518,23 @@ export default function AdminTasksPage() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <Input
                         label="Starting Chapter/Page"
                         type="number"
                         min={1}
                         value={resourceStartUnit}
                         onChange={(e) => setResourceStartUnit(parseInt(e.target.value, 10) || 1)}
-                        placeholder="e.g. 1 or 5"
+                        placeholder="e.g. 10"
+                      />
+                      <Input
+                        label="Start Challenge Day"
+                        type="number"
+                        min={1}
+                        max={90}
+                        value={resourceStartDayNumber}
+                        onChange={(e) => setResourceStartDayNumber(parseInt(e.target.value, 10) || 1)}
+                        placeholder="e.g. 1 or 10"
                       />
                       <Input
                         label="Units Per Day"
@@ -1529,7 +1542,7 @@ export default function AdminTasksPage() {
                         min={1}
                         value={resourceUnitsPerDay}
                         onChange={(e) => setResourceUnitsPerDay(parseInt(e.target.value, 10) || 3)}
-                        placeholder="e.g. 3 or 10"
+                        placeholder="e.g. 3"
                       />
                     </div>
 
@@ -1547,8 +1560,8 @@ export default function AdminTasksPage() {
 
                     <div className="p-2.5 bg-white rounded-lg border border-amber-300 text-[11px] text-amber-900 space-y-1">
                       <span className="font-bold text-amber-950 block">💡 Daily Auto-Progression Preview:</span>
-                      <div>Day 1: {resourceBookName || 'Matthew'} {resourceStartUnit}–{resourceStartUnit + resourceUnitsPerDay - 1}</div>
-                      <div>Day 2: {resourceBookName || 'Matthew'} {resourceStartUnit + resourceUnitsPerDay}–{resourceStartUnit + resourceUnitsPerDay * 2 - 1}</div>
+                      <div>Day {resourceStartDayNumber}: {resourceBookName || 'Matthew'} {resourceStartUnit}–{resourceStartUnit + resourceUnitsPerDay - 1}</div>
+                      <div>Day {resourceStartDayNumber + 1}: {resourceBookName || 'Matthew'} {resourceStartUnit + resourceUnitsPerDay}–{resourceStartUnit + resourceUnitsPerDay * 2 - 1}</div>
                     </div>
                   </div>
                 )}
