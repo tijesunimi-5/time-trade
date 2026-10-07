@@ -29,10 +29,30 @@ async function fetcher(endpoint: string, options: FetcherOptions = {}) {
       headers,
     });
 
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
       const errorMsg = data.error || 'API Request Failed';
+
+      // Global 401 Unauthorized / Token Expired Handling
+      if (response.status === 401) {
+        useAuthStore.getState().logout();
+        const currentPath = typeof window !== 'undefined' ? window.location.pathname : '';
+        const isAuthPage =
+          currentPath.includes('/login') ||
+          currentPath.includes('/register') ||
+          currentPath.includes('/admin/auth');
+
+        if (typeof window !== 'undefined' && !isAuthPage) {
+          toast.error(
+            'Session Expired',
+            'Your login session has expired. Please enter your email to log back in.'
+          );
+          window.location.href = '/login';
+        }
+        throw new Error(errorMsg || 'Session expired. Please log in again.');
+      }
+
       if (!suppressErrorToast) {
         toast.error('Connection Error', errorMsg);
       }
