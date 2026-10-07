@@ -277,7 +277,8 @@ export default function AdminTasksPage() {
   // --- TASK HANDLERS ---
   const handleOpenCreateTask = (dayId?: string) => {
     setEditingTaskId(null);
-    setSelectedDayId(dayId || '');
+    const defaultDayId = dayId || treeData?.programme?.phases?.[0]?.weeks?.[0]?.days?.[0]?.id || '';
+    setSelectedDayId(defaultDayId);
     setSelectedTemplateId('');
     setSelectedResourceId('');
     setTaskTitle('');
@@ -313,9 +314,13 @@ export default function AdminTasksPage() {
 
   const handleSaveTask = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedDayId) {
+      toast.error('Target Day Required', 'Please select a specific challenge day for this task.');
+      return;
+    }
     try {
       const payload = {
-        dayId: selectedDayId || undefined,
+        dayId: selectedDayId,
         templateId: selectedTemplateId || undefined,
         resourceId: selectedResourceId || undefined,
         title: taskTitle,
@@ -443,7 +448,8 @@ export default function AdminTasksPage() {
 
   const handleUseTemplateAsTask = (tmpl: any) => {
     setEditingTaskId(null);
-    setSelectedDayId('');
+    const firstDayId = treeData?.programme?.phases?.[0]?.weeks?.[0]?.days?.[0]?.id || '';
+    setSelectedDayId(firstDayId);
     setSelectedTemplateId(tmpl.id);
     setSelectedResourceId('');
     setTaskTitle(tmpl.title || '');
@@ -758,6 +764,29 @@ export default function AdminTasksPage() {
             {/* TREE TAB */}
             {activeTab === 'TREE' && (
               <div className="space-y-6">
+                {treeData?.globalTasks?.length > 0 && (
+                  <div className="p-4 bg-amber-50 border border-amber-300 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-sm font-extrabold text-amber-950 flex items-center gap-2">
+                        <ShieldAlert className="w-4 h-4 text-amber-600" />
+                        Unassigned Everyday Tasks ({treeData.globalTasks.length})
+                      </h3>
+                      <span className="text-[10px] text-amber-900 bg-amber-200/80 px-2 py-0.5 rounded font-black">
+                        Applies Every Day
+                      </span>
+                    </div>
+                    <p className="text-xs text-amber-800">
+                      These tasks have no specific day assigned and appear on every participant&apos;s daily checklist. You can edit or delete them right here:
+                    </p>
+                    <TaskReorderList
+                      tasks={treeData.globalTasks}
+                      onEditTask={handleOpenEditTask}
+                      onDeleteTask={handleDeleteTask}
+                      onReorderSuccess={loadAdminTree}
+                    />
+                  </div>
+                )}
+
                 {phasesList.length === 0 ? (
                   <div className="p-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200 space-y-4">
                     <div className="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center mx-auto">
@@ -1388,13 +1417,16 @@ export default function AdminTasksPage() {
             </h3>
             <form onSubmit={handleSaveTask} className="space-y-3">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Select Target Day</label>
+                <label className="text-xs font-bold text-slate-700 block mb-1">
+                  Select Target Day <span className="text-red-500">*</span>
+                </label>
                 <select
                   value={selectedDayId}
                   onChange={(e) => setSelectedDayId(e.target.value)}
+                  required
                   className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-brand-500 outline-none font-medium"
                 >
-                  <option value="">🌐 Global Everyday Task (Applies Every Single Day)</option>
+                  <option value="">-- Select Target Day (Required) --</option>
                   {phasesList.flatMap((p: any) =>
                     p.weeks?.flatMap((w: any) =>
                       w.days?.map((d: any) => (
@@ -1406,13 +1438,13 @@ export default function AdminTasksPage() {
                   )}
                 </select>
                 {!selectedDayId ? (
-                  <p className="text-[11px] text-amber-700 font-medium mt-1 flex items-center gap-1">
-                    <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
-                    Global tasks will appear on EVERY participant&apos;s daily checklist throughout the 90 days.
+                  <p className="text-[11px] text-red-600 font-medium mt-1 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-red-500 shrink-0" />
+                    Please select a specific challenge day. Tasks must be attached to a day.
                   </p>
                 ) : (
                   <p className="text-[11px] text-slate-500 font-medium mt-1">
-                    This task will only appear when participants are on the selected challenge day.
+                    This task will appear on the selected challenge day.
                   </p>
                 )}
               </div>
