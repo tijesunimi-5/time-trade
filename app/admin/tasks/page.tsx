@@ -10,10 +10,10 @@ import { api } from '../../../services/api';
 import { Loader } from '../../../components/ui/Loader';
 import { toast } from '../../../store/useToastStore';
 import { TaskReorderList } from '../../../components/features/TaskReorderList';
-import { Plus, Trash2, Pencil, BookOpen, Layers, CheckSquare, FolderPlus, ArrowRight, Calendar, Clock, Upload, FileText, Download, ExternalLink, GripVertical, ChevronUp, ChevronDown } from 'lucide-react';
+import { Plus, Trash2, Pencil, BookOpen, Layers, CheckSquare, FolderPlus, ArrowRight, Calendar, Clock, Upload, FileText, Download, ExternalLink, GripVertical, ChevronUp, ChevronDown, ShieldAlert, ToggleLeft, ToggleRight, AlertTriangle } from 'lucide-react';
 
 export default function AdminTasksPage() {
-  const [activeTab, setActiveTab] = useState<'TREE' | 'TEMPLATES' | 'RESOURCES'>('TREE');
+  const [activeTab, setActiveTab] = useState<'TREE' | 'NON_NEGOTIABLE' | 'TEMPLATES' | 'RESOURCES'>('TREE');
   const [treeData, setTreeData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -353,6 +353,34 @@ export default function AdminTasksPage() {
       loadAdminTree();
     } catch (err: any) {
       toast.error('Delete Failed', err.message || 'Unable to delete task');
+    }
+  };
+
+  const handleToggleTaskActive = async (task: any) => {
+    try {
+      const updatedStatus = task.isActive === false ? true : false;
+      await api.updateTask(task.id, { isActive: updatedStatus });
+      toast.success(
+        updatedStatus ? 'Task Activated' : 'Task Deactivated',
+        `"${task.title}" has been ${updatedStatus ? 'activated for participants' : 'deactivated and hidden from daily checklists'}.`
+      );
+      loadAdminTree();
+    } catch (err: any) {
+      toast.error('Action Failed', err.message || 'Unable to update task status');
+    }
+  };
+
+  const handleToggleNonNegotiable = async (task: any) => {
+    try {
+      const updatedFlag = !task.isNonNegotiable;
+      await api.updateTask(task.id, { isNonNegotiable: updatedFlag });
+      toast.success(
+        updatedFlag ? 'Flagged Non-Negotiable' : 'Everyday Flag Removed',
+        `"${task.title}" ${updatedFlag ? 'is now flagged as non-negotiable' : 'is now a standard task'}.`
+      );
+      loadAdminTree();
+    } catch (err: any) {
+      toast.error('Action Failed', err.message || 'Unable to update task flag');
     }
   };
 
@@ -698,6 +726,7 @@ export default function AdminTasksPage() {
         <div className="flex items-center gap-2 border-b border-slate-200 pb-2 overflow-x-auto">
           {[
             { id: 'TREE', label: 'Programme Hierarchy Tree', icon: Layers },
+            { id: 'NON_NEGOTIABLE', label: 'Daily Non-Negotiable Tasks', icon: ShieldAlert },
             { id: 'TEMPLATES', label: 'Reusable Templates', icon: CheckSquare },
             { id: 'RESOURCES', label: 'Resource Catalog', icon: BookOpen },
           ].map((tab) => {
@@ -905,6 +934,165 @@ export default function AdminTasksPage() {
                       )}
                     </div>
                   ))
+                )}
+              </div>
+            )}
+
+            {/* DAILY NON-NEGOTIABLE & GLOBAL TASKS TAB */}
+            {activeTab === 'NON_NEGOTIABLE' && (
+              <div className="space-y-4">
+                <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-amber-950">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-extrabold flex items-center gap-1.5 text-amber-900">
+                      <ShieldAlert className="w-4 h-4 text-amber-600" />
+                      Global Everyday & Daily Non-Negotiable Tasks Inspector
+                    </h3>
+                    <p className="text-xs text-amber-800">
+                      Tasks listed here either apply every single day (<code>dayId = null</code>) or are explicitly flagged as Non-Negotiable. Deactivate unwanted everyday tasks or toggle their everyday flag below.
+                    </p>
+                  </div>
+                  <Badge variant="amber" className="shrink-0 font-extrabold">
+                    {treeData?.globalTasks?.length || 0} Everyday Tasks Found
+                  </Badge>
+                </div>
+
+                {(!treeData?.globalTasks || treeData.globalTasks.length === 0) ? (
+                  <div className="p-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200 space-y-3">
+                    <div className="w-12 h-12 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">
+                      <ShieldAlert className="w-6 h-6" />
+                    </div>
+                    <div className="max-w-md mx-auto space-y-1">
+                      <h3 className="text-sm font-bold text-slate-800">No Global Everyday Tasks Configured</h3>
+                      <p className="text-xs text-slate-500">
+                        There are currently no tasks set as global non-negotiables or everyday tasks. All active tasks belong to specific challenge days.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {treeData.globalTasks.map((task: any) => {
+                      const isGlobal = !task.dayId;
+                      const isActive = task.isActive !== false;
+                      const isNonNeg = !!task.isNonNegotiable;
+
+                      return (
+                        <Card key={task.id} variant="glass" className={`p-4 space-y-3 flex flex-col justify-between border transition-all ${
+                          !isActive
+                            ? 'bg-slate-50/70 border-slate-200 opacity-75'
+                            : isGlobal
+                            ? 'bg-amber-50/30 border-amber-200/80 shadow-sm'
+                            : 'bg-white border-slate-200'
+                        }`}>
+                          <div className="space-y-2.5">
+                            {/* Badges Bar */}
+                            <div className="flex flex-wrap items-center justify-between gap-1.5">
+                              <div className="flex flex-wrap items-center gap-1.5">
+                                <Badge variant={task.pillar?.toLowerCase() as any}>{task.pillar}</Badge>
+                                {isGlobal ? (
+                                  <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+                                    🌐 Everyday (Global)
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                                    Day {task.day?.dayNumber}: {task.day?.title || `Day ${task.day?.dayNumber}`}
+                                  </span>
+                                )}
+                                {isNonNeg && (
+                                  <span className="text-[10px] font-black text-red-700 bg-red-50 px-2 py-0.5 rounded border border-red-200">
+                                    🔥 Non-Negotiable
+                                  </span>
+                                )}
+                              </div>
+
+                              <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded border ${
+                                isActive
+                                  ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                                  : 'bg-red-100 text-red-900 border-red-300'
+                              }`}>
+                                {isActive ? 'ACTIVE (SHOWING)' : 'DEACTIVATED'}
+                              </span>
+                            </div>
+
+                            {/* Task Info */}
+                            <div>
+                              <h4 className="text-sm font-bold text-slate-900 flex items-center justify-between gap-2">
+                                <span>{task.title}</span>
+                                <span className="text-[11px] font-medium text-slate-500 shrink-0">
+                                  {task.durationMinutes || 15} mins • {task.timeOfDay || 'ANYTIME'}
+                                </span>
+                              </h4>
+                              {task.description && (
+                                <p className="text-xs text-slate-600 line-clamp-2 mt-1">{task.description}</p>
+                              )}
+                            </div>
+
+                            {task.resource && (
+                              <div className="p-2 bg-slate-100/70 rounded-lg border border-slate-200 text-[11px] text-slate-700 flex items-center gap-1.5">
+                                <BookOpen className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
+                                <span className="truncate">Resource: {task.resource.title}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Quick Action Controls */}
+                          <div className="pt-3 border-t border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {/* 1-Click Activate / Deactivate Button */}
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleToggleTaskActive(task)}
+                                className={`text-[11px] font-bold flex items-center gap-1 py-1 px-2.5 ${
+                                  isActive
+                                    ? 'bg-red-50 hover:bg-red-100 text-red-700 border-red-200'
+                                    : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border-emerald-300'
+                                }`}
+                              >
+                                {isActive ? (
+                                  <>
+                                    <ToggleRight className="w-4 h-4 text-red-600" /> Deactivate Task
+                                  </>
+                                ) : (
+                                  <>
+                                    <ToggleLeft className="w-4 h-4 text-emerald-600" /> Activate Task
+                                  </>
+                                )}
+                              </Button>
+
+                              {/* Toggle Non-Negotiable / Everyday Flag */}
+                              <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleToggleNonNegotiable(task)}
+                                className="text-[11px] font-bold text-slate-700 bg-white hover:bg-slate-100 border-slate-300 flex items-center gap-1 py-1 px-2.5"
+                              >
+                                {isNonNeg ? 'Remove Everyday Flag' : 'Flag Non-Negotiable'}
+                              </Button>
+                            </div>
+
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleOpenEditTask(task)}
+                                title="Edit Task"
+                                className="p-1.5 text-slate-500 hover:text-brand-600 hover:bg-slate-100 rounded-lg transition-colors"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTask(task.id, task.title)}
+                                title="Delete Task"
+                                className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-slate-100 rounded-lg transition-colors"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </Card>
+                      );
+                    })}
+                  </div>
                 )}
               </div>
             )}
@@ -1204,9 +1392,9 @@ export default function AdminTasksPage() {
                 <select
                   value={selectedDayId}
                   onChange={(e) => setSelectedDayId(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-brand-500 outline-none"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white focus:ring-2 focus:ring-brand-500 outline-none font-medium"
                 >
-                  <option value="">Standard Non-Negotiable (Applies Every Day)</option>
+                  <option value="">🌐 Global Everyday Task (Applies Every Single Day)</option>
                   {phasesList.flatMap((p: any) =>
                     p.weeks?.flatMap((w: any) =>
                       w.days?.map((d: any) => (
@@ -1217,6 +1405,16 @@ export default function AdminTasksPage() {
                     )
                   )}
                 </select>
+                {!selectedDayId ? (
+                  <p className="text-[11px] text-amber-700 font-medium mt-1 flex items-center gap-1">
+                    <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
+                    Global tasks will appear on EVERY participant&apos;s daily checklist throughout the 90 days.
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-500 font-medium mt-1">
+                    This task will only appear when participants are on the selected challenge day.
+                  </p>
+                )}
               </div>
 
               <Input
