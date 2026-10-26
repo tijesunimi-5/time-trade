@@ -60,7 +60,12 @@ export default function ParticipantDashboard() {
       }
       setProgress(progressRes);
 
-      const activePolls = pollsRes?.polls || [];
+      const allPolls = pollsRes?.polls || [];
+      // Strictly remove polls where vote has ended (closed, expired) OR where user has already voted
+      const activePolls = allPolls.filter((p: any) => {
+        const isExp = Boolean(p.isExpired) || p.status === 'CLOSED' || (p.expiresAt && new Date(p.expiresAt) <= new Date());
+        return p.status === 'ACTIVE' && !isExp && !p.hasVoted;
+      });
       setStandalonePolls(activePolls);
 
       // Check if any popup poll requires user attention
@@ -390,22 +395,39 @@ export default function ParticipantDashboard() {
         {/* Cohort Community Polls Section */}
         {standalonePolls.length > 0 && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <BarChart2 className="w-5 h-5 text-emerald-600" />
-              <h2 className="text-lg font-black text-slate-900">Cohort Live Community Polls</h2>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BarChart2 className="w-5 h-5 text-emerald-600" />
+                <h2 className="text-lg font-black text-slate-900">Cohort Live Community Polls</h2>
+              </div>
+              <span className="text-xs text-slate-500 font-medium hidden sm:inline">
+                Tap an option to participate
+              </span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {standalonePolls.map((poll) => (
-                <PollCard
-                  key={poll.id}
-                  poll={poll}
-                  variant="standalone"
-                  onVoteSuccess={(updated) => {
-                    setStandalonePolls((prev) =>
-                      prev.map((p) => (p.id === updated.id ? updated : p))
-                    );
-                  }}
-                />
+                <div key={poll.id} className="relative group">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStandalonePolls((prev) => prev.filter((p) => p.id !== poll.id));
+                    }}
+                    className="absolute top-3 right-3 z-20 p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100/90 hover:bg-slate-200 rounded-lg transition-colors shadow-sm"
+                    title="Dismiss Poll from Dashboard"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                  <PollCard
+                    poll={poll}
+                    variant="standalone"
+                    onVoteSuccess={(updated) => {
+                      // Remove poll once vote has ended / completed
+                      setStandalonePolls((prev) =>
+                        prev.filter((p) => p.id !== updated.id)
+                      );
+                    }}
+                  />
+                </div>
               ))}
             </div>
           </div>
@@ -598,8 +620,17 @@ export default function ParticipantDashboard() {
 
       {/* Interactive Dashboard Poll Pop-up Modal */}
       {popupPoll && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl relative border border-slate-200 overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 cursor-pointer"
+          onClick={() => {
+            setDismissedPopupPollIds((prev) => [...prev, popupPoll.id]);
+            setPopupPoll(null);
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-lg w-full shadow-2xl relative border border-slate-200 overflow-hidden cursor-default"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-4 text-white flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <BarChart2 className="w-5 h-5 text-emerald-200" />
@@ -608,11 +639,13 @@ export default function ParticipantDashboard() {
                 </span>
               </div>
               <button
+                type="button"
                 onClick={() => {
                   setDismissedPopupPollIds((prev) => [...prev, popupPoll.id]);
                   setPopupPoll(null);
                 }}
-                className="p-1 text-white/80 hover:text-white rounded-lg hover:bg-white/10"
+                className="p-1 text-white/80 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
+                title="Dismiss Poll"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -623,12 +656,28 @@ export default function ParticipantDashboard() {
                 poll={popupPoll}
                 variant="modal"
                 onVoteSuccess={(updated) => {
+                  // Remove from standalone polls and close modal immediately
                   setStandalonePolls((prev) =>
-                    prev.map((p) => (p.id === updated.id ? updated : p))
+                    prev.filter((p) => p.id !== updated.id)
                   );
-                  setTimeout(() => setPopupPoll(null), 1200);
+                  setDismissedPopupPollIds((prev) => [...prev, updated.id]);
+                  setPopupPoll(null);
+                  toast.success('Vote Submitted', 'Your response has been saved.');
                 }}
               />
+            </div>
+
+            <div className="px-5 pb-4 pt-1 flex justify-end border-t border-slate-100 bg-slate-50/50">
+              <button
+                type="button"
+                onClick={() => {
+                  setDismissedPopupPollIds((prev) => [...prev, popupPoll.id]);
+                  setPopupPoll(null);
+                }}
+                className="text-xs font-bold text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-200 transition-colors"
+              >
+                Skip &amp; Continue to Tasks &rarr;
+              </button>
             </div>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Clock, ExternalLink, BookOpen, Headphones, MessageSquare, AlertCircle, Lock, Download, Video, FileText, Mic } from 'lucide-react';
 import { Badge } from '../ui/Badge';
 import { PollCard } from './PollCard';
@@ -17,6 +17,7 @@ export interface Task {
   durationMinutes?: number;
   pageRange?: string;
   timestampRange?: string;
+  bookName?: string;
   discussionQuestions?: string;
   resourceUrl?: string;
   fileUrl?: string;
@@ -35,6 +36,7 @@ export interface Task {
     fileName?: string;
     accessType?: string;
     contentNotes?: string;
+    bookName?: string;
   };
 }
 
@@ -53,6 +55,12 @@ export const TaskCard: React.FC<TaskCardProps> = ({
   isReadOnly = false,
   readOnlyMessage,
 }) => {
+  const [taskPoll, setTaskPoll] = useState(task.poll);
+
+  useEffect(() => {
+    setTaskPoll(task.poll);
+  }, [task.poll]);
+
   const getTaskTypeBadge = (type?: string) => {
     switch (type) {
       case 'NON_NEGOTIABLE':
@@ -83,7 +91,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
 
   const renderResourceActionButtons = () => {
     const res = task.resource;
-    const directUrl = task.resourceUrl || res?.url;
+    let directUrl = task.resourceUrl || res?.url;
     const directFileUrl = task.fileUrl || res?.fileUrl;
     const fileName = task.fileName || res?.fileName;
 
@@ -97,21 +105,52 @@ export const TaskCard: React.FC<TaskCardProps> = ({
       return `${API_HOST}${url}`;
     };
 
-    if (!res && !directUrl && !directFileUrl) return null;
-
     const resType = res?.type?.toUpperCase() || (directFileUrl ? 'BOOK' : 'EXTERNAL_LINK');
-    const isBible = resType === 'BIBLE' || task.category === 'BIBLE';
+    const isBible =
+      resType === 'BIBLE' ||
+      task.category === 'BIBLE' ||
+      Boolean(task.bookName) ||
+      task.title?.toLowerCase().includes('bible') ||
+      task.title?.toLowerCase().includes('scripture');
+
+    if (!res && !directUrl && !directFileUrl && !isBible && !task.pageRange) return null;
 
     if (isBible) {
+      // Determine book and chapter passage to display
+      const book = task.bookName || res?.bookName || '';
+      let passage = task.pageRange || '';
+      if (book) {
+        if (!passage) {
+          passage = book;
+        } else if (!passage.toLowerCase().includes(book.toLowerCase())) {
+          passage = `${book} ${passage}`;
+        }
+      } else if (!passage) {
+        passage = res?.title || task.title;
+      }
+
+      // If no direct Bible URL exists, generate one from the passage/book
+      if (!directUrl && book) {
+        const cleanBookSlug = book.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 3) || 'mat';
+        const numMatch = passage.match(/\d+/);
+        const chapterNum = numMatch ? numMatch[0] : '1';
+        directUrl = `https://bible.com/bible/1/${cleanBookSlug}.${chapterNum}.kjv`;
+      }
+
       return (
         <div className="mt-3 p-4 bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 rounded-xl text-white shadow-md space-y-2">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="space-y-0.5">
-              <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-amber-100 bg-black/20 px-2 py-0.5 rounded max-w-fit">
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-widest text-amber-100 bg-black/20 px-2.5 py-0.5 rounded max-w-fit">
                 <span>✝️ HOLY BIBLE READING PASSAGE</span>
+                {book && (
+                  <span className="bg-amber-300 text-amber-950 px-1.5 py-0.2 rounded font-black">
+                    {book}
+                  </span>
+                )}
               </div>
               <h4 className="text-sm sm:text-base font-black text-white">
-                {task.pageRange || res?.title || task.title}
+                {passage}
               </h4>
               <p className="text-xs text-amber-100 font-medium">
                 {res?.contentNotes || 'Daily Scripture Study Portion'}
@@ -269,10 +308,17 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           {/* Interactive Media / Resource / Softcopy Download Actions */}
           {renderResourceActionButtons()}
 
-          {/* Attached WhatsApp Poll */}
-          {task.poll && (
+          {/* Attached WhatsApp Poll (Only show if active, not expired, and user hasn't voted yet) */}
+          {taskPoll && taskPoll.status === 'ACTIVE' && !taskPoll.isExpired && !taskPoll.hasVoted && (
             <div className="mt-3">
-              <PollCard poll={task.poll} variant="embedded" isReadOnly={isReadOnly} />
+              <PollCard
+                poll={taskPoll}
+                variant="embedded"
+                isReadOnly={isReadOnly}
+                onVoteSuccess={() => {
+                  setTaskPoll(null);
+                }}
+              />
             </div>
           )}
 
@@ -305,7 +351,7 @@ export const TaskCard: React.FC<TaskCardProps> = ({
           <button
             onClick={() => onToggle(task.id)}
             disabled={isLoading}
-            className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 touch-manipulation ${
+            className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 touch-manipulation z-20 relative cursor-pointer active:scale-95 ${
               task.isCompleted
                 ? 'bg-emerald-600 text-white shadow-subtle-md'
                 : 'border-2 border-slate-300 hover:border-brand-600 text-transparent hover:text-slate-400 bg-white'
